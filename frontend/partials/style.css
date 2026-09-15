@@ -1,3 +1,5 @@
+/*--- login css --- */
+
 :root {
     --ink: #171412;
     --ink-2: #221d19;
@@ -19,6 +21,7 @@ html,
 body {
     margin: 0;
     padding: 0;
+    width: 100%;
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
     color: var(--text-dark);
@@ -29,14 +32,10 @@ a {
     color: inherit;
 }
 
-
-/* ================================================
-   HALAMAN LOGIN / DAFTAR
-   ================================================ */
-
 .layout {
     display: grid;
-    grid-template-columns: 1.05fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    width: 100vw;
     min-height: 100vh;
 }
 
@@ -735,12 +734,48 @@ body {
     position: relative;
 }
 
-.profile-info-section {
+
+/* Baris atas: kiri (judul+tabs) vs kanan (profile info) */
+
+.profile-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+}
+
+.profile-left-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-right-col {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 15px;
-    margin-bottom: 40px;
+    flex-shrink: 0;
+    /* biar ga kegencet kalau layar sempit */
+}
+
+
+/* Title sekarang ga perlu margin-bottom gede lagi karena tabs nempel di bawahnya */
+
+.saved-ideas-title {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+
+/* Tabs sekarang jadi bagian dari kolom kiri, hapus margin-bottom besar */
+
+.profile-tabs {
+    display: flex;
+    gap: 25px;
+    border-bottom: none;
+    /* garis bawah full-width ga cocok lagi di layout kolom */
+    padding-bottom: 10px;
+    margin-bottom: 0;
 }
 
 
@@ -803,6 +838,7 @@ body {
     font-size: 15px;
     cursor: pointer;
     margin-left: 15px;
+    /* bisa diganti margin-left: auto; kalau mau share button nempel ke kanan */
 }
 
 .btn-share-profile:hover {
@@ -1008,3 +1044,243 @@ body {
     gap: 12px;
     align-items: center;
 }
+
+.sidebar {
+    width: 72px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: #ffffff;
+    border-right: 1px solid #e9e9e9;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    z-index: 100;
+}
+
+.sidebar-menu {
+    position: relative;
+    /* Penting untuk acuan posisi indikator */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+
+/* Bulatan Hitam yang Meluncur / Berjalan */
+
+.nav-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 48px;
+    height: 48px;
+    background-color: #000000;
+    /* Bulatan Hitam */
+    border-radius: 50%;
+    z-index: 1;
+    /* Animasi pergerakan meluncur mulus */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    /* Supaya klik tetap menembus ke ikon */
+}
+
+
+/* Icon Link */
+
+.sidebar-menu .nav-item {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    text-decoration: none;
+    font-size: 20px;
+    position: relative;
+    z-index: 2;
+    /* Ikon berada di atas bulatan hitam */
+    transition: color 0.2s ease;
+}
+
+
+/* Saat aktif atau terendam bulatan hitam, warna ikon berubah jadi putih */
+
+.sidebar-menu .nav-item.active,
+.sidebar-menu .nav-item.hovered {
+    color: #ffffff !important;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #ffffff;
+}
+
+
+/* --- SIDEBAR KIRI --- */
+
+.sidebar {
+    width: 72px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: #ffffff;
+    border-right: 1px solid #e9e9e9;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    z-index: 100;
+}
+
+.sidebar-menu {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+
+/* Bulatan Hitam Berjalan */
+
+.nav-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 48px;
+    height: 48px;
+    background-color: #000000;
+    border-radius: 50%;
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.sidebar .nav-item {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    text-decoration: none;
+    font-size: 20px;
+    position: relative;
+    z-index: 2;
+    transition: color 0.2s ease;
+}
+
+.sidebar .nav-item.active,
+.sidebar .nav-item.hovered {
+    color: #ffffff !important;
+}
+
+
+/* --- TOP NAVBAR (KOLOM PENCARIAN) --- */
+
+.top-navbar {
+    position: fixed;
+    top: 0;
+    left: 72px;
+    /* Memberi ruang agar tidak tertimpa sidebar */
+    right: 0;
+    height: 80px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 99;
+}
+
+.search-box {
+    background-color: #e9e9e9;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    width: 80%;
+    max-width: 800px;
+    height: 48px;
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    padding-left: 10px;
+    font-size: 16px;
+}
+
+.search-icon {
+    color: #767676;
+}
+
+.profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #7dce9f;
+    color: #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+
+/* Styling dasar tombol sidebar */
+
+.sidebar-menu a {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    /* Bikin bentuk bulatan */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    /* Warna logo default: HITAM */
+    text-decoration: none;
+    font-size: 20px;
+    background-color: transparent;
+    transition: all 0.2s ease;
+    /* Biar perubahan warnanya halus pas kena kursor */
+}
+
+
+/* PAS KURSOR NYENTUH LOGO (HOVER) -> Bulatan jadi HITAM, Logo/Ikon jadi PUTIH */
+
+.sidebar-menu a:hover {
+    background-color: #000000 !important;
+    /* Bulatan background jadi HITAM */
+    color: #ffffff !important;
+    /* Logo/Ikon berubah jadi PUTIH */
+}
+
+
+/* KALO HALAMAN DIBUKA / AKTIF -> Tetap Bulatan HITAM, Logo PUTIH */
+
+.sidebar-menu a.active {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+
+/* --- akhir dari style css header di index.php yang search --- */

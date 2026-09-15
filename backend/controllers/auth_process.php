@@ -23,24 +23,44 @@ if (isset($_POST['register'])) {
         exit;
     }
 
+    // Cek username/email
     $cek = $koneksi->prepare("SELECT id_user FROM user WHERE username = ? OR email = ?");
-    $cek->execute([$username, $email]);
+    $cek->bind_param("ss", $username, $email);
+    $cek->execute();
+    $cek->store_result();
 
-    if ($cek->rowCount() > 0) {
+    if ($cek->num_rows > 0) {
+        $cek->close();
         header('Location: ../../frontend/pages/login.php?error=' . urlencode('Username atau email sudah terdaftar'));
         exit;
     }
+    $cek->close();
 
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
+    // Insert user baru
     $stmt = $koneksi->prepare(
-        "INSERT INTO user (username, password, email, nama_lengkap, alamat)
-         VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO user (username, password, email, nama_lengkap, alamat) VALUES (?, ?, ?, ?, ?)"
     );
-    $stmt->execute([$username, $password_hash, $email, $nama_lengkap, $alamat]);
+    $stmt->bind_param("sssss", $username, $password_hash, $email, $nama_lengkap, $alamat);
 
-    header('Location: ../../frontend/pages/login.php?success=' . urlencode('Pendaftaran berhasil, silakan masuk'));
-    exit;
+    if ($stmt->execute()) {
+        $new_id = $stmt->insert_id;
+        $stmt->close();
+
+        // Otomatis login setelah daftar
+        $_SESSION['id_user']      = $new_id;
+        $_SESSION['username']     = $username;
+        $_SESSION['nama_lengkap'] = $nama_lengkap;
+
+        // Redirect langsung ke root index.php
+        header('Location: ../../index.php');
+        exit;
+    } else {
+        $stmt->close();
+        header('Location: ../../frontend/pages/login.php?error=' . urlencode('Gagal mendaftar, coba lagi'));
+        exit;
+    }
 }
 
 // ---------- LOGIN ----------
@@ -53,19 +73,25 @@ if (isset($_POST['login'])) {
         exit;
     }
 
-    $stmt = $koneksi->prepare("SELECT * FROM user WHERE email = ?");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Query Login
+    $stmt = $koneksi->prepare("SELECT id_user, username, password, nama_lengkap FROM user WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['id_user']      = $user['id_user'];
-        $_SESSION['username']     = $user['username'];
-        $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
+    if ($user = $result->fetch_assoc()) {
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['id_user']      = $user['id_user'];
+            $_SESSION['username']     = $user['username'];
+            $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
 
-        header('Location: index.php');
-        exit;
+            // Redirect ke root index.php
+            header('Location: ../../index.php');
+            exit;
+        }
     }
 
+    $stmt->close();
     header('Location: ../../frontend/pages/login.php?error=' . urlencode('Email atau kata sandi salah'));
     exit;
 }

@@ -8,7 +8,29 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../partials/style.css">
+<link rel="stylesheet" href="/galeri_foto/frontend/partials/style.css">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .layout {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100vw !important;
+    min-height: 100vh !important;
+  }
+
+  .panel {
+    width: 100% !important;
+    height: 100% !important;
+    background: var(--paper-2, #F6F3EC) !important;
+  }
+</style>
 </head>
 <body>
 
@@ -46,22 +68,22 @@
       <div class="panes">
 
         <div class="pane pane-login">
-          <form action="../../backend/controllers/process_login.php" method="POST">
-            <div class="field">
-              <label for="login-email">Email</label>
-              <input type="email" id="login-email" name="email" placeholder="nama@email.com" required>
-            </div>
-            <div class="field">
-              <label for="login-password">Kata sandi</label>
-              <input type="password" id="login-password" name="password" placeholder="Kata sandi" required>
-            </div>
-            <button type="submit" name="login" class="submit">Masuk</button>
-          </form>
+  <form action="../../backend/controllers/auth_process.php" method="POST">
+  <div class="field">
+    <label for="login-email">Email</label>
+    <input type="email" id="login-email" name="email" placeholder="nama@email.com" required>
+  </div>
+  <div class="field">
+    <label for="login-password">Kata sandi</label>
+    <input type="password" id="login-password" name="password" placeholder="Kata sandi" required>
+  </div>
+  <button type="submit" name="login" class="submit">Masuk</button>
+</form>
           <p class="hint">Belum punya papan sendiri? Klik "Daftar" di atas.</p>
         </div>
 
         <div class="pane pane-register">
-          <form action="../../backend/controllers/process_login.php" method="POST">
+          <form action="../../backend/controllers/auth_process.php" method="POST">
             <div class="field">
               <label for="reg-username">Username</label>
               <input type="text" id="reg-username" name="username" placeholder="Username" required>
