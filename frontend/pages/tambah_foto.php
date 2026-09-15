@@ -1,334 +1,142 @@
-<input type="hidden" id="userId" value="<?php echo $_SESSION['id_user'] ?? ''; ?>">
-
+<?php
+session_start();
+if (!isset($_SESSION['id_user'])) {
+    header('Location: login.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Galeri Foto</title>
-  
-  <!-- FontAwesome Icon -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tambah Foto - Pinterest</title>
+    
+    <!-- FontAwesome Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #ffffff; color: #111; overflow: hidden; }
 
-    body {
-      background-color: #f7f7f7;
-      display: flex;
-    }
+        .main-container {
+            margin-left: 72px;
+            margin-top: 68px;
+            width: calc(100% - 72px);
+            display: flex;
+            height: calc(100vh - 68px);
+        }
 
-    /* --- SIDEBAR KIRI --- */
-    .sidebar {
-      width: 72px;
-      height: 100vh;
-      background-color: #ffffff;
-      border-right: 1px solid #e0e0e0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 0;
-      position: fixed;
-      left: 0;
-      top: 0;
-      z-index: 100;
-    }
+        .create-pin-section {
+            flex: 1;
+            padding: 24px 40px;
+            overflow-y: auto;
+            border-right: 1px solid #e0e0e0;
+        }
 
-    .sidebar-menu, .sidebar-bottom {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      align-items: center;
-      width: 100%;
-    }
+        .pin-form-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 32px;
+            max-width: 900px;
+        }
 
-    .sidebar a, .sidebar-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #111111;
-      font-size: 20px;
-      text-decoration: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-      outline: none;
-    }
+        .upload-card {
+            background-color: #e9e9e9;
+            border-radius: 24px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            position: relative;
+            cursor: pointer;
+        }
 
-    .sidebar a:hover, .sidebar-btn:hover {
-      background-color: #f0f0f0;
-    }
+        .upload-card:hover { background-color: #e2e2e2; }
 
-    .sidebar a.active {
-      background-color: #111111;
-      color: #ffffff;
-    }
+        .upload-icon-wrapper {
+            width: 48px; height: 48px; border-radius: 50%;
+            background-color: #ffffff; display: flex;
+            align-items: center; justify-content: center; margin-bottom: 16px;
+        }
 
-    /* --- TOP NAVBAR --- */
-    .top-navbar {
-      position: fixed;
-      top: 0;
-      left: 72px;
-      right: 0;
-      height: 68px;
-      background-color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      border-bottom: 1px solid #e0e0e0;
-      z-index: 90;
-    }
+        .file-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 12px; color: #767676; margin-bottom: 6px; }
 
-    .search-box {
-      display: flex;
-      align-items: center;
-      background-color: #e9e9e9;
-      border-radius: 24px;
-      padding: 10px 16px;
-      width: 300px;
-    }
+        .form-control {
+            width: 100%; padding: 14px 16px; border-radius: 16px;
+            border: 1px solid transparent; background-color: #e9e9e9; outline: none; font-size: 14px;
+        }
 
-    .search-box .search-icon {
-      color: #767676;
-      margin-right: 10px;
-    }
+        .form-control:focus { border-color: #e60023; background-color: #ffffff; }
+        textarea.form-control { resize: none; height: 80px; }
 
-    .search-box input {
-      border: none;
-      background: transparent;
-      outline: none;
-      width: 100%;
-      font-size: 14px;
-    }
+        .btn-publish {
+            background-color: #e60023; color: #ffffff; border: none;
+            padding: 12px 24px; border-radius: 24px; font-weight: 600; font-size: 14px; cursor: pointer;
+        }
 
-    .profile-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background-color: #e9e9e9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: #111;
-      text-decoration: none;
-    }
-
-    /* --- POPUP PANEL CREATE (OVERLAY DI ATAS HALAMAN) --- */
-    .create-panel {
-      position: fixed;
-      left: 72px;
-      top: 0;
-      width: 320px;
-      height: 100vh;
-      background-color: #ffffff;
-      border-right: 1px solid #e0e0e0;
-      padding: 24px 16px;
-      display: none; /* Disembunyikan dulu */
-      flex-direction: column;
-      z-index: 999; /* Muncul di paling atas tanpa mereload halaman */
-      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.08);
-    }
-
-    .create-panel.open {
-      display: flex; /* Murni hanya kontrol visual */
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .panel-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #111;
-    }
-
-    .close-btn {
-      border: none;
-      background: transparent;
-      font-size: 18px;
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .close-btn:hover {
-      background-color: #e9e9e9;
-    }
-
-    .option-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .option-item {
-      display: flex;
-      align-items: flex-start;
-      padding: 12px;
-      border-radius: 16px;
-      background-color: #efefef;
-      cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.1s ease;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .option-item:hover {
-      background-color: #e2e2e2;
-    }
-
-    .option-item:active {
-      transform: scale(0.98);
-    }
-
-    .option-icon {
-      width: 40px;
-      height: 40px;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 12px;
-      flex-shrink: 0;
-    }
-
-    .option-text h4 {
-      font-size: 15px;
-      font-weight: 600;
-      color: #111;
-      margin-bottom: 2px;
-    }
-
-    .option-text p {
-      font-size: 12px;
-      color: #5f5f5f;
-      line-height: 1.3;
-    }
-
-    .main-wrapper {
-      margin-left: 72px;
-      margin-top: 68px;
-      padding: 24px;
-      width: 100%;
-    }
-  </style>
+        .alert-error {
+            padding: 12px 16px; background-color: #ffe6e6; color: #d8000c;
+            border-radius: 12px; margin-bottom: 20px; font-size: 14px;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Sidebar Kiri -->
-  <aside class="sidebar">
-    <nav class="sidebar-menu">
-      <a href="/galeri_foto/index.php" class="active" title="Beranda"><i class="fa-solid fa-house"></i></a>
-      <a href="#" title="Jelajahi"><i class="fa-regular fa-compass"></i></a>
-      <a href="/galeri_foto/frontend/pages/profile.php" title="Kategori"><i class="fa-solid fa-table-cells"></i></a>
-      
-      <!-- TOMBOL PLUS MURNI BUTTON (TIDAK AKAN MEREFRESH HALAMAN) -->
-      <button type="button" class="sidebar-btn" id="createBtn" title="Buat">
-        <i class="fa-regular fa-square-plus"></i>
-      </button>
-      
-      <a href="#" title="Notifikasi"><i class="fa-regular fa-bell"></i></a>
-      <a href="#" title="Pesan"><i class="fa-regular fa-comment-dots"></i></a>
-    </nav>
-    <div class="sidebar-bottom">
-      <a href="#" title="Pengaturan"><i class="fa-solid fa-gear"></i></a>
+    <!-- INCLUDE NAVBAR DARI PARTIALS -->
+    <?php include '../partials/navbar.php'; ?>
+
+    <div class="main-container">
+        <section class="create-pin-section">
+            <h2 style="font-size: 20px; margin-bottom: 24px;">Create Pin</h2>
+
+            <?php if (isset($_GET['error'])): ?>
+                <div class="alert-error"><?php echo htmlspecialchars($_GET['error']); ?></div>
+            <?php endif; ?>
+
+            <!-- ACTION FORM KE FOTO_PROCESS.PHP -->
+            <form action="../../backend/controllers/foto_process.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload">
+
+                <div class="pin-form-grid">
+                    <div>
+                        <div class="upload-card">
+                            <div class="upload-icon-wrapper">
+                                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                            </div>
+                            <h4>Upload your media</h4>
+                            <p style="font-size: 13px; color: #5f5f5f; margin-top: 8px;">JPG, PNG, WEBP allowed</p>
+                            <input type="file" name="foto" class="file-input" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" name="judul_foto" class="form-control" placeholder="Add a title" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="deskripsi_foto" class="form-control" placeholder="Add a detailed description"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Board Name (Optional)</label>
+                            <input type="text" name="nama_board" class="form-control" placeholder="Choose or create a board">
+                        </div>
+
+                        <button type="submit" class="btn-publish">Publish</button>
+                    </div>
+                </div>
+            </form>
+        </section>
     </div>
-  </aside>
 
-  <!-- Top Navbar -->
-  <header class="top-navbar">
-    <div class="search-box">
-      <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" placeholder="Search">
-    </div>
-    <div class="top-nav-right">
-      <a href="/galeri_foto/frontend/pages/profile.php" class="profile-avatar-link" title="Profil Saya">
-        <div class="profile-avatar">A</div>
-      </a>
-    </div>
-  </header>
-
-  <!-- POPUP PANEL CREATE -->
-  <div class="create-panel" id="createPanel">
-    <div class="panel-header">
-      <h2 class="panel-title">Create</h2>
-      <button type="button" class="close-btn" id="closeBtn">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <div class="option-list">
-      
-      <a href="/galeri_foto/backend/pages/boards_tambah_foto.php" class="option-item">
-        <div class="option-icon">
-          <i class="fa-solid fa-table-cells-large"></i>
-        </div>
-        <div class="option-text">
-          <h4>Board</h4>
-          <p>Post your photos or videos and add links, stickers, effects and more</p>
-        </div>
-      </a>
-
-      <a href="#" class="option-item">
-        <div class="option-icon">
-          <i class="fa-solid fa-scissors"></i>
-        </div>
-        <div class="option-text">
-          <h4>Collage</h4>
-          <p>Mix and match ideas to build your vision and create something new</p>
-        </div>
-      </a>
-    </div>
-  </div>
-
-  <main class="main-wrapper">
-    <!-- Konten Beranda / Home kamu di sini -->
-  </main>
-
-  <!-- JAVASCRIPT TANPA REFRESH HALAMAN -->
-  <script>
-    const createBtn = document.getElementById('createBtn');
-    const closeBtn = document.getElementById('closeBtn');
-    const createPanel = document.getElementById('createPanel');
-
-    // Klik tombol Plus -> Buka/Tutup Menu tanpa berpindah halaman
-    createBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      createPanel.classList.toggle('open');
-    });
-
-    // Klik Tombol Silang -> Tutup
-    closeBtn.addEventListener('click', function() {
-      createPanel.classList.remove('open');
-    });
-
-    // Klik di luar area menu -> Tutup otomatis
-    document.addEventListener('click', function(e) {
-      if (!createPanel.contains(e.target) && !createBtn.contains(e.target)) {
-        createPanel.classList.remove('open');
-      }
-    });
-  </script>
 </body>
 </html>

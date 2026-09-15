@@ -6,63 +6,82 @@ if (!isset($_SESSION['id_user'])) {
     exit;
 }
 
+require_once __DIR__ . '/backend/config/connection.php';
 include 'frontend/partials/header.php';
 include 'frontend/partials/navbar.php';
 ?>
 
-<!-- Simpan ID User untuk kebutuhan JS LocalStorage -->
+<style>
+    .pin-container {
+        column-count: 5;
+        column-gap: 16px;
+        padding: 20px 32px;
+        margin-top: 70px;
+    }
+    .pin-card {
+        break-inside: avoid;
+        margin-bottom: 16px;
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        background-color: #f0f0f0;
+    }
+    .pin-card img {
+        width: 100%;
+        display: block;
+        border-radius: 16px;
+        transition: filter 0.2s ease;
+    }
+    .pin-card:hover img {
+        filter: brightness(0.85);
+    }
+    .pin-info {
+        padding: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #111;
+    }
+    @media (max-width: 1200px) { .pin-container { column-count: 4; } }
+    @media (max-width: 800px)  { .pin-container { column-count: 2; } }
+</style>
+
 <input type="hidden" id="userId" value="<?php echo $_SESSION['id_user']; ?>">
 
-<!--<header class="top-navbar">
-    <div class="search-container">
-        <form action="index.php" method="GET" id="searchForm">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" name="q" id="searchInput" placeholder="Search" autocomplete="off">
-            </div>
-        </form>
-
-     
-        <div class="search-dropdown" id="searchDropdown">
-            <div class="search-section">
-                <div class="section-header">Recent searches</div>
-                <div class="search-grid" id="recentSearchesGrid"></div>
-            </div>
-
-            <div class="search-section">
-                <div class="section-header">Ideas for you</div>
-                <div class="search-grid">
-                    <a href="index.php?q=Logo+design" class="search-card">
-                        <div class="card-icon"><i class="fa-solid fa-lightbulb"></i></div>
-                        <span>Logo design</span>
-                    </a>
-                    <a href="index.php?q=Frame+template" class="search-card">
-                        <div class="card-icon"><i class="fa-solid fa-image"></i></div>
-                        <span>Frame template</span>
-                    </a>
-                    <a href="index.php?q=Pretty+landscapes" class="search-card">
-                        <div class="card-icon"><i class="fa-solid fa-mountain"></i></div>
-                        <span>Pretty landscapes</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="top-nav-right">
-        <a href="/galeri_foto/frontend/pages/profile.php" class="profile-avatar-link" title="Profil Saya">
-            <div class="profile-avatar"><?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?></div>
-        </a>
-    </div>
-</header>-->
-
 <main class="main-content">
-    <h1>Selamat Datang, <?php echo htmlspecialchars($_SESSION['nama_lengkap']); ?>!</h1>
+    <div class="pin-container">
+        <?php
+        // PERBAIKAN: Ganti tanggal_unggahan menjadi tanggal_ungahan (menggunakan 1 huruf g)
+        $query = "SELECT * FROM foto ORDER BY tanggal_ungahan DESC";
+        $stmt  = $koneksi->prepare($query);
+
+        if ($stmt) {
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows > 0):
+                while ($row = $result->fetch_assoc()):
+        ?>
+                    <div class="pin-card">
+                        <!-- Memanggil gambar dari folder backend/uploads/ -->
+                        <img src="backend/uploads/<?php echo htmlspecialchars($row['lokasi_file']); ?>" 
+                             alt="<?php echo htmlspecialchars($row['judul_foto']); ?>">
+                        <div class="pin-info">
+                            <?php echo htmlspecialchars($row['judul_foto']); ?>
+                        </div>
+                    </div>
+        <?php 
+                endwhile;
+            else:
+        ?>
+                <p style="text-align: center; color: #767676; grid-column: 1/-1;">Belum ada foto yang diunggah.</p>
+        <?php 
+            endif;
+            $stmt->close();
+        }
+        ?>
+    </div>
 </main>
 
-
-<!-- Load Script Search JS -->
 <script src="frontend/partials/search.js"></script>
-
 </body>
 </html>
