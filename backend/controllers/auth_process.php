@@ -48,9 +48,10 @@ if (isset($_POST['register'])) {
         $new_id = $stmt->insert_id;
         $stmt->close();
 
-        // Otomatis login setelah daftar
+        // Otomatis login setelah daftar (TAMBAHKAN SESSION EMAIL)
         $_SESSION['id_user']      = $new_id;
         $_SESSION['username']     = $username;
+        $_SESSION['email']        = $email; // <-- DITAMBAHKAN
         $_SESSION['nama_lengkap'] = $nama_lengkap;
 
         // Redirect langsung ke root index.php
@@ -73,8 +74,8 @@ if (isset($_POST['login'])) {
         exit;
     }
 
-    // Query Login
-    $stmt = $koneksi->prepare("SELECT id_user, username, password, nama_lengkap FROM user WHERE email = ?");
+    // Query Login (TAMBAHKAN KOLOM email DI SELECT)
+    $stmt = $koneksi->prepare("SELECT id_user, username, email, password, nama_lengkap FROM user WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -83,6 +84,7 @@ if (isset($_POST['login'])) {
         if (password_verify($password, $user['password'])) {
             $_SESSION['id_user']      = $user['id_user'];
             $_SESSION['username']     = $user['username'];
+            $_SESSION['email']        = $user['email']; // <-- DITAMBAHKAN
             $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
 
             // Redirect ke root index.php

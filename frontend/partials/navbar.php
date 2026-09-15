@@ -1,10 +1,40 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Tarik email dari database jika belum tersimpan di session
+if (!isset($_SESSION['email']) && isset($_SESSION['id_user']) && isset($koneksi)) {
+    $id_user_nav = $_SESSION['id_user'];
+    $qUserNav = $koneksi->prepare("SELECT email FROM user WHERE id_user = ?");
+    $qUserNav->bind_param("i", $id_user_nav);
+    $qUserNav->execute();
+    $resUserNav = $qUserNav->get_result();
+    if ($dataNav = $resUserNav->fetch_assoc()) {
+        $_SESSION['email'] = $dataNav['email'];
+    }
+    $qUserNav->close();
+}
+?>
+
 <input type="hidden" id="userId" value="<?php echo $_SESSION['id_user'] ?? ''; ?>">
 
 <!-- FontAwesome Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
-/* CSS NAVBAR & SIDEBAR */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
+    background-color: #ffffff;
+}
+
+/* SIDEBAR KIRI */
 .sidebar {
     position: fixed;
     top: 0;
@@ -17,14 +47,14 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0;
+    padding: 16px 0;
     z-index: 1000;
 }
 
 .sidebar-menu {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 .sidebar-menu a, .sidebar-bottom a {
@@ -44,27 +74,35 @@
     background-color: #f0f0f0;
 }
 
+/* TOP NAVBAR (Tinggi 56px ringkas) */
 .top-navbar {
     position: fixed;
     top: 0;
     left: 72px;
     right: 0;
-    height: 68px;
+    height: 56px;
     background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 6px 24px;
+    gap: 16px;
     z-index: 999;
 }
 
 .search-box {
     background-color: #e9e9e9;
     border-radius: 24px;
-    padding: 10px 16px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
-    width: 400px;
+    flex: 1; /* Supaya memanjang mengisi sisa layar */
+    max-width: 100%;
+}
+
+.search-box .search-icon {
+    color: #767676;
+    font-size: 15px;
 }
 
 .search-box input {
@@ -73,18 +111,156 @@
     outline: none;
     margin-left: 10px;
     width: 100%;
+    font-size: 14px;
+    color: #111;
 }
 
-.profile-avatar {
-    width: 40px;
-    height: 40px;
+.search-box .mic-icon {
+    color: #111;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.top-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+}
+
+.profile-avatar-small {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background-color: #e60023;
-    color: white;
+    background-color: #7bdcb5;
+    color: #111;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    border: 1px solid #333;
+}
+
+.btn-dropdown-trigger {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    color: #5f5f5f;
+    font-size: 12px;
+}
+
+.btn-dropdown-trigger:hover {
+    background-color: #f0f0f0;
+}
+
+/* POPUP USER DROPDOWN */
+.user-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 45px;
+    right: 0;
+    width: 280px;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    z-index: 9999;
+}
+
+.user-dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-header-label {
+    font-size: 11px;
+    color: #5f5f5f;
+    margin-bottom: 8px;
+}
+
+.user-profile-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    margin-bottom: 8px;
+}
+
+.user-profile-info:hover {
+    background-color: #f0f0f0;
+}
+
+.avatar-large {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    background-color: #e60023;
+    color: #fff;
+    border: none;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: #111;
+}
+
+.user-type, .user-email {
+    font-size: 12px;
+    color: #767676;
+    word-break: break-all;
+}
+
+.dropdown-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.dropdown-item {
+    padding: 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #111;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+.bold-text {
+    font-weight: 600;
+}
+
+.text-danger {
+    color: #e60023;
+}
+
+/* LAYOUT KONTEN UTAMA (MEPET PRESISI KE NAVBAR) */
+.main-content {
+    margin-left: 72px;
+    margin-top: 56px;   /* Sejajar tepat dengan tinggi Top Navbar */
+    padding-top: 10px;  /* Margin tipis agar mepet ke search bar */
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.main-content > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 /* POPUP CREATE PANEL */
@@ -122,10 +298,7 @@
         <a href="/galeri_foto/index.php" title="Beranda"><i class="fa-solid fa-house"></i></a>
         <a href="#" title="Jelajahi"><i class="fa-regular fa-compass"></i></a>
         <a href="/galeri_foto/frontend/pages/profile.php" title="Kategori"><i class="fa-solid fa-table-cells"></i></a>
-        
-        <!-- Tombol Plus untuk buka popup -->
         <a href="javascript:void(0)" id="btnTambah" title="Buat"><i class="fa-regular fa-square-plus"></i></a>
-        
         <a href="#" title="Notifikasi"><i class="fa-regular fa-bell"></i></a>
         <a href="#" title="Pesan"><i class="fa-regular fa-comment-dots"></i></a>
     </nav>
@@ -138,14 +311,41 @@
 <header class="top-navbar">
     <div class="search-box">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" placeholder="Search">
+        <input type="text" placeholder="Search your Pins">
+        <i class="fa-solid fa-microphone mic-icon"></i>
     </div>
+    
     <div class="top-nav-right">
-        <a href="/galeri_foto/frontend/pages/profile.php" class="profile-avatar-link" title="Profil Saya">
-            <div class="profile-avatar">
-                <?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>
-            </div>
+        <a href="/galeri_foto/frontend/pages/profile.php" class="profile-avatar-small" title="Profil Saya">
+            <?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>
         </a>
+
+        <button type="button" id="btnUserMenu" class="btn-dropdown-trigger">
+            <i class="fa-solid fa-chevron-down"></i>
+        </button>
+
+        <div class="user-dropdown-menu" id="userDropdown">
+            <div class="dropdown-header-label">Currently in</div>
+            
+            <a href="/galeri_foto/frontend/pages/profile.php" class="user-profile-info">
+                <div class="profile-avatar-small avatar-large">
+                    <?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>
+                </div>
+                <div class="user-details">
+                    <span class="user-name"><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></span>
+                    <span class="user-type">Personal</span>
+                    <span class="user-email"><?php echo htmlspecialchars($_SESSION['email'] ?? ''); ?></span>
+                </div>
+            </a>
+
+            <div class="dropdown-section">
+                <a href="#" class="dropdown-item bold-text">Convert to business</a>
+            </div>
+
+            <div class="dropdown-section">
+                <a href="/galeri_foto/backend/controllers/auth_process.php?action=logout" class="dropdown-item bold-text text-danger">Log out</a>
+            </div>
+        </div>
     </div>
 </header>
 
@@ -159,7 +359,6 @@
     </div>
 
     <div class="option-list">
-        <!-- ROUTER DIARAHKAN KE TAMBAH_FOTO.PHP -->
         <a href="/galeri_foto/frontend/pages/tambah_foto.php" class="option-item">
             <div class="option-icon"><i class="fa-solid fa-table-cells-large"></i></div>
             <div class="option-text">
@@ -180,6 +379,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Handling Create Panel (+ Button)
     const btnTambah = document.getElementById('btnTambah');
     const closeBtn = document.getElementById('closeBtn');
     const createPanel = document.getElementById('createPanel');
@@ -198,6 +398,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('click', function(e) {
             if (!createPanel.contains(e.target) && !btnTambah.contains(e.target)) {
                 createPanel.classList.remove('open');
+            }
+        });
+    }
+
+    // Handling User Profile Dropdown
+    const btnUserMenu = document.getElementById('btnUserMenu');
+    const userDropdown = document.getElementById('userDropdown');
+
+    if (btnUserMenu && userDropdown) {
+        btnUserMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!userDropdown.contains(e.target) && !btnUserMenu.contains(e.target)) {
+                userDropdown.classList.remove('show');
             }
         });
     }

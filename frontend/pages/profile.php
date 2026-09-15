@@ -3,7 +3,8 @@ session_start();
 include '../../backend/config/connection.php';
 
 $id_user_login = $_SESSION['id_user'] ?? null;
-$tab = $_GET['tab'] ?? 'collages';
+// Ambil tab dari URL, jika tidak ada default ke 'boards'
+$tab = $_GET['tab'] ?? 'boards';
 
 // Sertakan header dan navbar dari folder partials
 include '../partials/header.php';
@@ -21,20 +22,20 @@ include '../partials/navbar.php';
                 <h1 class="saved-ideas-title">Your saved ideas</h1>
 
                 <div class="profile-tabs">
-                    <a href="#" data-tab="liked" class="tab-item <?= $tab === 'liked' ? 'active' : '' ?>">Liked</a>
-                    <a href="#" data-tab="boards" class="tab-item <?= $tab === 'boards' ? 'active' : '' ?>">Boards</a>
-                    <a href="#" data-tab="collages" class="tab-item <?= $tab === 'collages' ? 'active' : '' ?>">Collages</a>
+                    <a href="?tab=liked" data-tab="liked" class="tab-item <?= $tab === 'liked' ? 'active' : '' ?>">Liked</a>
+                    <a href="?tab=boards" data-tab="boards" class="tab-item <?= $tab === 'boards' ? 'active' : '' ?>">Boards</a>
+                    <a href="?tab=collages" data-tab="collages" class="tab-item <?= $tab === 'collages' ? 'active' : '' ?>">Collages</a>
                 </div>
             </div>
 
             <!-- Kolom Kanan: Avatar + Nama + Share -->
             <div class="profile-right-col">
                 <div class="profile-avatar-large">
-                    A
+                    <?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>
                     <button class="edit-avatar-btn" title="Edit Profil"><i class="fa-solid fa-pencil"></i></button>
                 </div>
                 <div class="profile-details">
-                    <h2>amelcimel</h2>
+                    <h2><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></h2>
                     <p class="following-count">0 following</p>
                 </div>
                 <button class="btn-share-profile">Share profile</button>
@@ -42,7 +43,7 @@ include '../partials/navbar.php';
 
         </div>
 
-        <!-- INI yang bakal di-ganti-ganti pakai JS, tanpa reload halaman -->
+        <!-- Area Dynamic Tab Content -->
         <div id="tab-content">
             <?php include 'get_tab_content.php'; ?>
         </div>
@@ -53,15 +54,18 @@ include '../partials/navbar.php';
 <script>
 document.querySelectorAll('.tab-item').forEach(tab => {
     tab.addEventListener('click', function (e) {
-        e.preventDefault(); // stop link biar gak reload halaman
+        e.preventDefault();
 
         const selectedTab = this.dataset.tab;
 
-        // 1. Pindahin class active ke tab yang diklik
+        // 1. Ubah indikator tab aktif
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
 
-        // 2. Ambil konten baru dari server, tanpa reload
+        // 2. Update URL di browser tanpa reload halaman (opsional, agar rapi)
+        window.history.pushState({}, '', '?tab=' + selectedTab);
+
+        // 3. Ambil konten tab via AJAX
         fetch('get_tab_content.php?tab=' + selectedTab)
             .then(response => response.text())
             .then(html => {
