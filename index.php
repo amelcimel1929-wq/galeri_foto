@@ -60,6 +60,7 @@ include 'frontend/partials/navbar.php';
     <h1>Selamat Datang, <?php echo htmlspecialchars($_SESSION['nama_lengkap']); ?>!</h1>
 </main>
 
+
 <!-- Load Script Search JS -->
 <script src="frontend/partials/search.js"></script>
 
