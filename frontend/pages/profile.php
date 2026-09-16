@@ -3,10 +3,17 @@ session_start();
 include '../../backend/config/connection.php';
 
 $id_user_login = $_SESSION['id_user'] ?? null;
-// Ambil tab dari URL, jika tidak ada default ke 'boards'
+
+// Jika user belum login, redirect ke halaman login
+if (!$id_user_login) {
+    header('Location: ../auth/login.php');
+    exit;
+}
+
+// Ambil tab dari URL, default ke 'boards'
 $tab = $_GET['tab'] ?? 'boards';
 
-// Sertakan header dan navbar dari folder partials
+// Sertakan header dan navbar
 include '../partials/header.php';
 include '../partials/navbar.php';
 ?>
@@ -14,7 +21,7 @@ include '../partials/navbar.php';
 <main class="main-content">
     <div class="profile-header-container">
 
-        <!-- Baris atas: Judul+Tabs (kiri) sejajar dengan Profile info (kanan) -->
+        <!-- Baris atas: Judul + Tabs (kiri) & Profile info (kanan) -->
         <div class="profile-top-row">
 
             <!-- Kolom Kiri: Judul & Tabs -->
@@ -62,11 +69,11 @@ document.querySelectorAll('.tab-item').forEach(tab => {
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
 
-        // 2. Update URL di browser tanpa reload halaman (opsional, agar rapi)
+        // 2. Update URL di browser tanpa reload halaman
         window.history.pushState({}, '', '?tab=' + selectedTab);
 
-        // 3. Ambil konten tab via AJAX
-        fetch('get_tab_content.php?tab=' + selectedTab)
+        // 3. Ambil konten tab via AJAX (ditambahkan _t cache breaker agar data selalu fresh)
+        fetch(`get_tab_content.php?tab=${selectedTab}&_t=${new Date().getTime()}`)
             .then(response => response.text())
             .then(html => {
                 document.getElementById('tab-content').innerHTML = html;
