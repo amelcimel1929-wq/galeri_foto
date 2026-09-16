@@ -64,7 +64,7 @@ $uploader_id = $foto['id_user'];
         flex-shrink: 0;
     }
 
-    /* Foto Utama */
+    /* Foto Utama dengan wadah relative untuk tombol di atas gambar */
     .pin-photo-container {
         flex: 1.2;
         background-color: #f7f7f7;
@@ -73,12 +73,40 @@ $uploader_id = $foto['id_user'];
         justify-content: center;
         overflow: hidden;
         padding: 8px;
+        position: relative; /* Penting untuk penataan tombol absolut */
+        cursor: pointer;
     }
     .pin-photo-container img {
         width: 100%;
         height: 100%;
         object-fit: contain;
         border-radius: 16px;
+        transition: transform 0.2s ease;
+    }
+    .pin-photo-container:hover img {
+        transform: scale(1.02);
+    }
+
+    /* Tombol Kembali melayang di atas gambar */
+    .btn-back-overlay {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.9);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+        transition: background-color 0.2s, transform 0.1s;
+    }
+    .btn-back-overlay:hover {
+        background-color: #ffffff;
+        transform: scale(1.08);
     }
 
     /* Panel Informasi Kanan Dalam Kartu */
@@ -107,20 +135,24 @@ $uploader_id = $foto['id_user'];
     .action-left {
         display: flex;
         align-items: center;
-        gap: 2px;
+        gap: 6px;
     }
     .icon-btn {
         border: none;
         background: transparent;
-        padding: 4px;
+        padding: 8px;
         border-radius: 50%;
         cursor: pointer;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        text-decoration: none;
+        color: #111111;
+        transition: background-color 0.2s ease;
     }
-    .icon-btn:hover { background-color: #f0f0f0; }
-    .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: #111; stroke-width: 2; }
+    .icon-btn:hover { 
+        background-color: #f0f0f0; 
+    }
 
     .btn-save-red {
         background: #e60023;
@@ -224,7 +256,6 @@ $uploader_id = $foto['id_user'];
         justify-content: center;
     }
 
-    /* Balasan ditaruh dalam wadah sendiri supaya rapi & terindentasi */
     .replies-list {
         display: flex;
         flex-direction: column;
@@ -284,29 +315,79 @@ $uploader_id = $foto['id_user'];
         border-radius: 16px;
         object-fit: cover;
     }
+
+    /* MODAL LIGHTBOX FULLSCREEN */
+    .lightbox-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(5px);
+        justify-content: center;
+        align-items: center;
+    }
+    .lightbox-modal.active {
+        display: flex;
+    }
+    .lightbox-img {
+        max-width: 90vw;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 25px;
+        color: #fff;
+        font-size: 32px;
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        transition: color 0.2s;
+    }
+    .lightbox-close:hover {
+        color: #ff4d4d;
+    }
 </style>
 
 <div class="main-wrapper">
     <div class="pin-top-section">
         <!-- Kartu Utama -->
         <div class="pin-main-card">
+            <!-- WADAH GAMBAR DENGAN TOMBOL PANAH KEMBALI DI DALAMNYA -->
             <div class="pin-photo-container">
-                <img src="<?php echo $file_path; ?>" alt="<?php echo htmlspecialchars($foto['judul_foto']); ?>">
+                <!-- TOMBOL KEMBALI KE galeri_foto/index.php -->
+            <!-- TOMBOL KEMBALI (NAIK 2 FOLDER KE INDEX.PHP) -->
+<a href="../../index.php" class="btn-back-overlay" title="Kembali" onclick="event.stopPropagation();">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+</a>
+
+                <img src="<?php echo $file_path; ?>" alt="<?php echo htmlspecialchars($foto['judul_foto']); ?>" onclick="openLightbox('<?php echo $file_path; ?>')">
             </div>
 
             <div class="pin-details-container">
                 <div class="pin-scroll-content" id="scrollContainer">
                     <div class="pin-actions">
                         <div class="action-left">
+                            <!-- TOMBOL LIKE -->
                             <button id="btnLike" class="icon-btn" title="Sukai">
-                                <svg id="likeIcon" viewBox="0 0 24 24">
+                                <svg id="likeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2">
                                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                                 </svg>
                             </button>
-                            <span id="likeCount" style="font-weight:700; font-size:13px;">0</span>
+                            <span id="likeCount" style="font-weight:700; font-size:13px; margin-right: 4px;">0</span>
 
+                            <!-- TOMBOL KOMENTAR -->
                             <button id="btnCommentIcon" class="icon-btn" title="Komentar">
-                                <svg viewBox="0 0 24 24">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2">
                                     <path d="M12 3c5.5 0 10 3.58 10 8 0 2.8-1.8 5.25-4.5 6.75V21l-3.5-2h-2c-5.5 0-10-3.58-10-8s4.5-8 10-8z"/>
                                 </svg>
                             </button>
@@ -367,9 +448,29 @@ $uploader_id = $foto['id_user'];
     </div>
 </div>
 
+<!-- MODAL LIGHTBOX FULLSCREEN -->
+<div id="lightboxModal" class="lightbox-modal" onclick="closeLightbox(event)">
+    <span class="lightbox-close" onclick="closeLightbox(event)">&times;</span>
+    <img id="lightboxImg" class="lightbox-img" src="" alt="Full Image">
+</div>
+
 <script>
 const ID_FOTO = <?php echo $id_foto; ?>;
 const ID_USER_LOGIN = <?php echo (int) $id_user_login; ?>;
+
+function openLightbox(imageSrc) {
+    const modal = document.getElementById('lightboxModal');
+    const modalImg = document.getElementById('lightboxImg');
+    modalImg.src = imageSrc;
+    modal.classList.add('active');
+}
+
+function closeLightbox(event) {
+    if (event.target.id === 'lightboxModal' || event.target.classList.contains('lightbox-close')) {
+        const modal = document.getElementById('lightboxModal');
+        modal.classList.remove('active');
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     const btnLike = document.getElementById('btnLike');
@@ -381,7 +482,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const commentsList = document.getElementById('commentsList');
     const scrollContainer = document.getElementById('scrollContainer');
 
-    // ---------- LIKE (tidak berubah) ----------
     function checkLikeStatus() {
         fetch(`../../backend/controllers/like_process.php?action=status&id_foto=${ID_FOTO}`)
             .then(res => res.json())
@@ -425,8 +525,6 @@ document.addEventListener('DOMContentLoaded', function () {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
     });
 
-    // ---------- KOMENTAR + BALASAN (BERTINGKAT, ala TikTok) ----------
-
     function buildCommentTree(list) {
         const map = {};
         const roots = [];
@@ -453,7 +551,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return div.innerHTML;
     }
 
-    // Render satu komentar + seluruh balasannya (rekursif)
     function renderComment(item) {
         const avatarLetter = item.username ? item.username.charAt(0).toUpperCase() : '?';
         const isOwner = item.id_user === ID_USER_LOGIN;
@@ -502,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(err => console.log("Gagal load komentar:", err));
     }
 
-    // Kirim komentar baru ATAU balasan (kalau parentId diisi)
     function sendComment(text, parentId = null) {
         const isiTrim = text.trim();
         if (!isiTrim) return;
@@ -526,7 +622,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(err => console.log("Gagal kirim komentar:", err));
     }
 
-    // Hapus komentar (balasannya ikut terhapus di server via ON DELETE CASCADE)
     function deleteComment(idKomentar) {
         if (!confirm('Hapus komentar ini?')) return;
 
@@ -546,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(err => console.log("Gagal hapus komentar:", err));
     }
 
-    // Komentar utama (bukan balasan)
     btnKirimKomentar.addEventListener('click', function () {
         sendComment(inputKomentar.value);
         inputKomentar.value = '';
@@ -558,9 +652,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Event delegation: tombol Balas, Hapus, dan kirim balasan
     commentsList.addEventListener('click', function (e) {
-        // Klik "Balas" -> tampilkan / sembunyikan kotak input balasan
         const replyLink = e.target.closest('.reply-link');
         if (replyLink) {
             const id = replyLink.dataset.id;
@@ -577,14 +669,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Klik "Hapus"
         const deleteLink = e.target.closest('.delete-link');
         if (deleteLink) {
             deleteComment(deleteLink.dataset.id);
             return;
         }
 
-        // Klik tombol kirim di dalam kotak balasan
         const sendBtn = e.target.closest('.btn-send-icon-small');
         if (sendBtn) {
             const parentId = sendBtn.dataset.parent;
@@ -598,7 +688,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Tekan Enter di dalam kotak balasan juga mengirim
     commentsList.addEventListener('keypress', function (e) {
         if (e.key === 'Enter' && e.target.classList.contains('reply-input')) {
             const box = e.target.closest('.reply-box-container');

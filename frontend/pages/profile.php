@@ -4,7 +4,7 @@ include '../../backend/config/connection.php';
 
 $id_user_login = $_SESSION['id_user'] ?? null;
 
-// Jika user belum login, redirect ke halaman login
+// Jika user belum login, alihkan ke login
 if (!$id_user_login) {
     header('Location: ../auth/login.php');
     exit;
@@ -13,7 +13,7 @@ if (!$id_user_login) {
 // Ambil tab dari URL, default ke 'boards'
 $tab = $_GET['tab'] ?? 'boards';
 
-// Sertakan header dan navbar
+// Include Partial Navbar & Header
 include '../partials/header.php';
 include '../partials/navbar.php';
 ?>
@@ -21,10 +21,10 @@ include '../partials/navbar.php';
 <main class="main-content">
     <div class="profile-header-container">
 
-        <!-- Baris atas: Judul + Tabs (kiri) & Profile info (kanan) -->
+        <!-- Header Profil -->
         <div class="profile-top-row">
 
-            <!-- Kolom Kiri: Judul & Tabs -->
+            <!-- Tab Navigasi (Liked / Boards / Collages) -->
             <div class="profile-left-col">
                 <h1 class="saved-ideas-title">Your saved ideas</h1>
 
@@ -35,7 +35,7 @@ include '../partials/navbar.php';
                 </div>
             </div>
 
-            <!-- Kolom Kanan: Avatar + Nama + Share -->
+            <!-- Profile Info User -->
             <div class="profile-right-col">
                 <div class="profile-avatar-large">
                     <?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>
@@ -50,7 +50,7 @@ include '../partials/navbar.php';
 
         </div>
 
-        <!-- Area Dynamic Tab Content -->
+        <!-- Area Dynamic Tab Content (Load get_tab_content.php) -->
         <div id="tab-content">
             <?php include 'get_tab_content.php'; ?>
         </div>
@@ -65,14 +65,14 @@ document.querySelectorAll('.tab-item').forEach(tab => {
 
         const selectedTab = this.dataset.tab;
 
-        // 1. Ubah indikator tab aktif
+        // 1. Ubah class active indikator tab
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
 
-        // 2. Update URL di browser tanpa reload halaman
+        // 2. Update URL di address bar
         window.history.pushState({}, '', '?tab=' + selectedTab);
 
-        // 3. Ambil konten tab via AJAX (ditambahkan _t cache breaker agar data selalu fresh)
+        // 3. Ambil data tab via AJAX
         fetch(`get_tab_content.php?tab=${selectedTab}&_t=${new Date().getTime()}`)
             .then(response => response.text())
             .then(html => {
