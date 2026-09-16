@@ -35,6 +35,49 @@ include 'frontend/partials/navbar.php';
     .pin-card:hover img {
         filter: brightness(0.85);
     }
+    
+    /* Overlay Hover */
+    .pin-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+        padding: 12px;
+        box-sizing: border-box;
+        pointer-events: none; /* Supaya klik di area kosong overlay tetap menembus ke tag <a> gambar */
+    }
+    .pin-card:hover .pin-overlay {
+        opacity: 1;
+    }
+    
+    /* Tombol Unduh SVG */
+    .btn-download-icon {
+        pointer-events: auto; /* Tombol unduh tetap bisa diklik */
+        background: #ffffff;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .btn-download-icon:hover {
+        transform: scale(1.08);
+        background-color: #f0f0f0;
+    }
+    .btn-download-icon svg {
+        width: 18px;
+        height: 18px;
+        fill: #111111;
+    }
+
     .pin-info {
         padding: 10px;
         font-weight: 600;
@@ -45,12 +88,9 @@ include 'frontend/partials/navbar.php';
     @media (max-width: 800px)  { .pin-container { column-count: 2; } }
 </style>
 
-<input type="hidden" id="userId" value="<?php echo $_SESSION['id_user']; ?>">
-
 <main class="main-content">
     <div class="pin-container">
         <?php
-        // PERBAIKAN: Ganti tanggal_unggahan menjadi tanggal_ungahan (menggunakan 1 huruf g)
         $query = "SELECT * FROM foto ORDER BY tanggal_ungahan DESC";
         $stmt  = $koneksi->prepare($query);
 
@@ -60,11 +100,25 @@ include 'frontend/partials/navbar.php';
 
             if ($result->num_rows > 0):
                 while ($row = $result->fetch_assoc()):
+                    $id_foto = $row['id_foto'];
+                    $file_path = "backend/uploads/" . htmlspecialchars($row['lokasi_file']);
         ?>
                     <div class="pin-card">
-                        <!-- Memanggil gambar dari folder backend/uploads/ -->
-                        <img src="backend/uploads/<?php echo htmlspecialchars($row['lokasi_file']); ?>" 
-                             alt="<?php echo htmlspecialchars($row['judul_foto']); ?>">
+                        <!-- Link menuju halaman detail -->
+                        <a href="frontend/pages/detail.php?id=<?php echo $id_foto; ?>" style="display: block; text-decoration: none;">
+                            <img src="<?php echo $file_path; ?>" alt="<?php echo htmlspecialchars($row['judul_foto']); ?>">
+                            
+                            <div class="pin-overlay">
+                                <!-- Tombol Unduh SVG -->
+                                <a href="<?php echo $file_path; ?>" download="<?php echo htmlspecialchars($row['judul_foto']); ?>" class="btn-download-icon" title="Unduh Gambar" onclick="event.stopPropagation();">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M12 15.586l-4.293-4.293-1.414 1.414L12 18.414l5.707-5.707-1.414-1.414L12 15.586z"/>
+                                        <path d="M11 3h2v13h-2z"/>
+                                        <path d="M5 20h14v2H5z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </a>
                         <div class="pin-info">
                             <?php echo htmlspecialchars($row['judul_foto']); ?>
                         </div>
@@ -73,7 +127,7 @@ include 'frontend/partials/navbar.php';
                 endwhile;
             else:
         ?>
-                <p style="text-align: center; color: #767676; grid-column: 1/-1;">Belum ada foto yang diunggah.</p>
+                <p style="text-align: center; color: #767676;">Belum ada foto yang diunggah.</p>
         <?php 
             endif;
             $stmt->close();
