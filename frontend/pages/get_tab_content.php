@@ -47,7 +47,7 @@ $upload_path = "../../backend/uploads/";
         object-fit: cover;
     }
 
-    /* ================= 2. BOARDS GRID ================= */
+    /* ================= 2. BOARDS & COLLAGES GRID ================= */
     .boards-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -94,7 +94,7 @@ $upload_path = "../../backend/uploads/";
 
     /* ================= 3. MODAL POP-UP IMAGE ================= */
     .image-modal-overlay {
-        display: none; /* Tersembunyi secara default */
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
@@ -107,9 +107,7 @@ $upload_path = "../../backend/uploads/";
         backdrop-filter: blur(4px);
     }
 
-    .image-modal-overlay.active {
-        display: flex;
-    }
+    .image-modal-overlay.active { display: flex; }
 
     .image-modal-content {
         position: relative;
@@ -179,6 +177,69 @@ $upload_path = "../../backend/uploads/";
             $stmt->close();
             ?>
         </div>
+
+    <?php elseif ($tab === 'collages'): ?>
+        <!-- ================= TAB COLLAGES (ALBUM FAVORIT) ================= -->
+        <?php
+        $qAlbumFav = "SELECT af.*, 
+                      (SELECT COUNT(*) FROM favorit fv WHERE fv.id_album_favorit = af.id_album_favorit) as total_foto
+                      FROM album_favorit af 
+                      WHERE af.id_user = ? 
+                      ORDER BY af.id_album_favorit DESC";
+
+        $stmtAF = $koneksi->prepare($qAlbumFav);
+        $stmtAF->bind_param("i", $id_user);
+        $stmtAF->execute();
+        $resAlbumFav = $stmtAF->get_result();
+
+        if ($resAlbumFav->num_rows > 0):
+        ?>
+            <div class="boards-grid">
+                <?php while ($album = $resAlbumFav->fetch_assoc()): 
+                    $q4FotoFav = "SELECT f.lokasi_file 
+                                  FROM favorit fv 
+                                  JOIN foto f ON fv.id_foto = f.id_foto 
+                                  WHERE fv.id_album_favorit = ? 
+                                  ORDER BY fv.id_favorit DESC LIMIT 4";
+                    $stmt4F = $koneksi->prepare($q4FotoFav);
+                    $stmt4F->bind_param("i", $album['id_album_favorit']);
+                    $stmt4F->execute();
+                    $res4FotoFav = $stmt4F->get_result();
+
+                    $fotos = [];
+                    while ($f = $res4FotoFav->fetch_assoc()) {
+                        $fotos[] = $f['lokasi_file'];
+                    }
+                    $stmt4F->close();
+                ?>
+                    <!-- TAUTAN DIUBAH KE detail_collage.php -->
+                    <a href="detail_collage.php?id_album_favorit=<?= $album['id_album_favorit']; ?>" class="board-card-container">
+                        <div class="board-cover-grid">
+                            <?php 
+                            for ($i = 0; $i < 4; $i++): 
+                                if (isset($fotos[$i])): 
+                            ?>
+                                    <img src="<?= $upload_path . htmlspecialchars($fotos[$i]); ?>" alt="Preview Album Favorit">
+                            <?php else: ?>
+                                    <div class="empty-slot"></div>
+                            <?php 
+                                endif;
+                            endfor; 
+                            ?>
+                        </div>
+                        <div class="board-info">
+                            <h3 class="board-title">📁 <?= htmlspecialchars($album['nama_album']); ?></h3>
+                            <p class="board-count"><?= $album['total_foto']; ?> Favorit</p>
+                        </div>
+                    </a>
+                <?php endwhile; ?>
+            </div>
+        <?php 
+        else:
+            echo "<p class='empty-state-text'>Belum ada album collage/favorit yang dibuat.</p>";
+        endif;
+        $stmtAF->close();
+        ?>
 
     <?php elseif ($tab === 'boards'): ?>
         <!-- ================= TAB BOARDS (GRID COVER 2x2) ================= -->
@@ -262,10 +323,6 @@ $upload_path = "../../backend/uploads/";
         $stmtA->close();
         ?>
 
-    <?php else: ?>
-        <div style="margin-top: 20px;">
-            <p class="empty-state-text">Belum ada collage.</p>
-        </div>
     <?php endif; ?>
 
 <?php endif; ?>

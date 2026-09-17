@@ -109,7 +109,7 @@ include '../partials/navbar.php';
 </div>
 
 <style>
-/* CSS Layout Utama Sesuai Gambar */
+/* CSS Layout Utama */
 .profile-header-container {
     width: 100%;
     max-width: 1200px;

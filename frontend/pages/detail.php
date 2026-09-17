@@ -64,7 +64,6 @@ $uploader_id = $foto['id_user'];
         flex-shrink: 0;
     }
 
-    /* Foto Utama dengan wadah relative untuk tombol di atas gambar */
     .pin-photo-container {
         flex: 1.2;
         background-color: #f7f7f7;
@@ -73,7 +72,7 @@ $uploader_id = $foto['id_user'];
         justify-content: center;
         overflow: hidden;
         padding: 8px;
-        position: relative; /* Penting untuk penataan tombol absolut */
+        position: relative;
         cursor: pointer;
     }
     .pin-photo-container img {
@@ -87,7 +86,6 @@ $uploader_id = $foto['id_user'];
         transform: scale(1.02);
     }
 
-    /* Tombol Kembali melayang di atas gambar */
     .btn-back-overlay {
         position: absolute;
         top: 16px;
@@ -109,7 +107,6 @@ $uploader_id = $foto['id_user'];
         transform: scale(1.08);
     }
 
-    /* Panel Informasi Kanan Dalam Kartu */
     .pin-details-container {
         flex: 1;
         padding: 16px;
@@ -125,7 +122,6 @@ $uploader_id = $foto['id_user'];
         flex-grow: 1;
     }
 
-    /* Actions Header */
     .pin-actions {
         display: flex;
         align-items: center;
@@ -167,7 +163,6 @@ $uploader_id = $foto['id_user'];
         display: inline-block;
     }
 
-    /* Uploader */
     .uploader-box {
         display: flex;
         align-items: center;
@@ -190,7 +185,7 @@ $uploader_id = $foto['id_user'];
     .pin-title-text { font-size: 15px; font-weight: 700; margin: 0 0 6px; color: #111; line-height: 1.2; }
     .pin-desc-text { font-size: 12px; color: #333; margin-bottom: 10px; line-height: 1.3; }
 
-    /* ===== KOMENTAR & BALASAN ===== */
+    /* KOMENTAR */
     .comments-wrapper {
         display: flex;
         flex-direction: column;
@@ -294,7 +289,7 @@ $uploader_id = $foto['id_user'];
         justify-content: center;
     }
 
-    /* REKOMENDASI SAMPING PAS 2 FOTO */
+    /* REKOMENDASI SAMPING */
     .pin-sidebar-recommend {
         flex: 1;
         display: grid;
@@ -316,7 +311,7 @@ $uploader_id = $foto['id_user'];
         object-fit: cover;
     }
 
-    /* MODAL LIGHTBOX FULLSCREEN */
+    /* MODAL LIGHTBOX */
     .lightbox-modal {
         display: none;
         position: fixed;
@@ -330,9 +325,7 @@ $uploader_id = $foto['id_user'];
         justify-content: center;
         align-items: center;
     }
-    .lightbox-modal.active {
-        display: flex;
-    }
+    .lightbox-modal.active { display: flex; }
     .lightbox-img {
         max-width: 90vw;
         max-height: 90vh;
@@ -348,11 +341,6 @@ $uploader_id = $foto['id_user'];
         font-size: 32px;
         font-weight: bold;
         cursor: pointer;
-        user-select: none;
-        transition: color 0.2s;
-    }
-    .lightbox-close:hover {
-        color: #ff4d4d;
     }
 </style>
 
@@ -360,15 +348,12 @@ $uploader_id = $foto['id_user'];
     <div class="pin-top-section">
         <!-- Kartu Utama -->
         <div class="pin-main-card">
-            <!-- WADAH GAMBAR DENGAN TOMBOL PANAH KEMBALI DI DALAMNYA -->
             <div class="pin-photo-container">
-                <!-- TOMBOL KEMBALI (NAIK 2 FOLDER KE INDEX.PHP) -->
                 <a href="../../index.php" class="btn-back-overlay" title="Kembali" onclick="event.stopPropagation();">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                     </svg>
                 </a>
-
                 <img src="<?php echo $file_path; ?>" alt="<?php echo htmlspecialchars($foto['judul_foto']); ?>" onclick="openLightbox('<?php echo $file_path; ?>')">
             </div>
 
@@ -376,7 +361,7 @@ $uploader_id = $foto['id_user'];
                 <div class="pin-scroll-content" id="scrollContainer">
                     <div class="pin-actions">
                         <div class="action-left">
-                            <!-- TOMBOL LIKE -->
+                            <!-- LIKE -->
                             <button id="btnLike" class="icon-btn" title="Sukai">
                                 <svg id="likeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2">
                                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
@@ -384,14 +369,14 @@ $uploader_id = $foto['id_user'];
                             </button>
                             <span id="likeCount" style="font-weight:700; font-size:13px; margin-right: 4px;">0</span>
 
-                            <!-- TOMBOL KOMENTAR -->
+                            <!-- KOMENTAR -->
                             <button id="btnCommentIcon" class="icon-btn" title="Komentar">
                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2">
                                     <path d="M12 3c5.5 0 10 3.58 10 8 0 2.8-1.8 5.25-4.5 6.75V21l-3.5-2h-2c-5.5 0-10-3.58-10-8s4.5-8 10-8z"/>
                                 </svg>
                             </button>
 
-                            <!-- TOMBOL FAVORIT -->
+                            <!-- FAVORIT -->
                             <button id="btnFavorite" class="icon-btn" title="Favorit">
                                 <svg id="favoriteIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
@@ -460,6 +445,24 @@ $uploader_id = $foto['id_user'];
     <img id="lightboxImg" class="lightbox-img" src="" alt="Full Image">
 </div>
 
+<!-- MODAL FAVORIT ALA TIKTOK -->
+<div id="modalFavorit" style="display:none; position:fixed; z-index:99999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div style="background:#fff; width:320px; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <h3 style="margin-top:0; font-size:16px; font-weight:700; text-align:center; color:#111;">Simpan ke Album Favorit</h3>
+        
+        <div id="listAlbumArea" style="max-height:180px; overflow-y:auto; margin:15px 0;"></div>
+
+        <div style="border-top:1px solid #eee; padding-top:10px; display:flex; gap:6px;">
+            <input type="text" id="inputAlbumBaru" placeholder="Nama album baru..." style="flex:1; padding:8px 12px; border:1px solid #ccc; border-radius:20px; font-size:12px; outline:none;">
+            <button id="btnBuatAlbum" type="button" style="background:#e60023; color:#fff; border:none; padding:8px 12px; border-radius:20px; font-weight:bold; font-size:12px; cursor:pointer;">Buat</button>
+        </div>
+        
+        <div style="margin-top:12px; text-align:center;">
+            <button id="btnTutupModal" type="button" style="background:none; border:none; color:#767676; font-size:12px; cursor:pointer; text-decoration:underline;">Batal</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const ID_FOTO = <?php echo $id_foto; ?>;
 const ID_USER_LOGIN = <?php echo (int) $id_user_login; ?>;
@@ -473,8 +476,7 @@ function openLightbox(imageSrc) {
 
 function closeLightbox(event) {
     if (event.target.id === 'lightboxModal' || event.target.classList.contains('lightbox-close')) {
-        const modal = document.getElementById('lightboxModal');
-        modal.classList.remove('active');
+        document.getElementById('lightboxModal').classList.remove('active');
     }
 }
 
@@ -482,12 +484,102 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnLike = document.getElementById('btnLike');
     const likeIcon = document.getElementById('likeIcon');
     const likeCount = document.getElementById('likeCount');
+    
+    const btnFavorite = document.getElementById('btnFavorite');
+    const favoriteIcon = document.getElementById('favoriteIcon');
+    const modalFavorit = document.getElementById('modalFavorit');
+    const listAlbumArea = document.getElementById('listAlbumArea');
+    const inputAlbumBaru = document.getElementById('inputAlbumBaru');
+    const btnBuatAlbum = document.getElementById('btnBuatAlbum');
+    const btnTutupModal = document.getElementById('btnTutupModal');
+
     const btnCommentIcon = document.getElementById('btnCommentIcon');
     const inputKomentar = document.getElementById('inputKomentar');
     const btnKirimKomentar = document.getElementById('btnKirimKomentar');
     const commentsList = document.getElementById('commentsList');
     const scrollContainer = document.getElementById('scrollContainer');
 
+    let isAlreadyFavorited = false;
+
+    // --- LOGIKA FAVORIT ---
+    function checkFavoriteStatus() {
+        fetch('../../backend/controllers/favorit_process.php?action=status&id_foto=' + ID_FOTO)
+            .then(res => res.json())
+            .then(data => {
+                isAlreadyFavorited = data.is_favorited;
+                favoriteIcon.style.fill = data.is_favorited ? '#111111' : 'none';
+            })
+            .catch(err => console.log("Error status favorit:", err));
+    }
+
+    btnFavorite.addEventListener('click', function () {
+        if (isAlreadyFavorited) {
+            simpanFavorit(null);
+        } else {
+            loadAlbumList();
+            modalFavorit.style.display = 'flex';
+        }
+    });
+
+    btnTutupModal.addEventListener('click', function() {
+        modalFavorit.style.display = 'none';
+    });
+
+    function loadAlbumList() {
+        fetch('../../backend/controllers/favorit_process.php?action=get_albums')
+            .then(res => res.json())
+            .then(data => {
+                listAlbumArea.innerHTML = '';
+                if (!data.albums || data.albums.length === 0) {
+                    listAlbumArea.innerHTML = '<p style="font-size:12px; color:#767676; text-align:center;">Belum ada album. Buat baru di bawah.</p>';
+                    return;
+                }
+                data.albums.forEach(album => {
+                    const item = document.createElement('div');
+                    item.style.cssText = 'padding:8px 12px; background:#f0f0f0; border-radius:10px; margin-bottom:6px; cursor:pointer; font-size:13px; font-weight:600; display:flex; justify-content:space-between; align-items:center;';
+                    item.innerHTML = `<span>📁 ${album.nama_album}</span> <span style="color:#e60023;">+</span>`;
+                    item.onclick = function() { simpanFavorit(album.id_album_favorit); };
+                    listAlbumArea.appendChild(item);
+                });
+            });
+    }
+
+    btnBuatAlbum.addEventListener('click', function () {
+        const nama = inputAlbumBaru.value.trim();
+        if (!nama) return;
+
+        const formData = new FormData();
+        formData.append('action', 'create_album');
+        formData.append('nama_album', nama);
+
+        fetch('../../backend/controllers/favorit_process.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    inputAlbumBaru.value = '';
+                    simpanFavorit(data.id_album_favorit);
+                }
+            });
+    });
+
+    function simpanFavorit(idAlbum) {
+        const formData = new FormData();
+        formData.append('action', 'toggle');
+        formData.append('id_foto', ID_FOTO);
+        if (idAlbum) formData.append('id_album_favorit', idAlbum);
+
+        fetch('../../backend/controllers/favorit_process.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    modalFavorit.style.display = 'none';
+                    // DIARAHKAN KE TAB COLLAGES DI PROFILE
+                    window.location.href = 'profile.php?tab=collages';
+                }
+            });
+    }
+
+    // --- LOGIKA LIKE ---
     function checkLikeStatus() {
         fetch(`../../backend/controllers/like_process.php?action=status&id_foto=${ID_FOTO}`)
             .then(res => res.json())
@@ -500,8 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     likeIcon.style.fill = 'none';
                     likeIcon.style.stroke = '#111111';
                 }
-            })
-            .catch(err => console.log("Gagal load status like:", err));
+            });
     }
 
     btnLike.addEventListener('click', function () {
@@ -522,8 +613,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         likeIcon.style.stroke = '#111111';
                     }
                 }
-            })
-            .catch(err => console.log("Gagal toggle like:", err));
+            });
     });
 
     btnCommentIcon.addEventListener('click', function () {
@@ -531,15 +621,11 @@ document.addEventListener('DOMContentLoaded', function () {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
     });
 
+    // --- LOGIKA KOMENTAR ---
     function buildCommentTree(list) {
         const map = {};
         const roots = [];
-
-        list.forEach(item => {
-            item.replies = [];
-            map[item.id_komentar] = item;
-        });
-
+        list.forEach(item => { item.replies = []; map[item.id_komentar] = item; });
         list.forEach(item => {
             if (item.parent_id && map[item.parent_id]) {
                 map[item.parent_id].replies.push(item);
@@ -547,7 +633,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 roots.push(item);
             }
         });
-
         return roots;
     }
 
@@ -560,7 +645,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderComment(item) {
         const avatarLetter = item.username ? item.username.charAt(0).toUpperCase() : '?';
         const isOwner = item.id_user === ID_USER_LOGIN;
-
         let repliesHtml = '';
         if (item.replies && item.replies.length > 0) {
             repliesHtml = `<div class="replies-list">${item.replies.map(renderComment).join('')}</div>`;
@@ -568,9 +652,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         return `
             <div class="comment-item" data-id="${item.id_komentar}">
-                <div class="avatar-circle" style="width:18px; height:18px; font-size:9px; flex-shrink:0;">
-                    ${avatarLetter}
-                </div>
+                <div class="avatar-circle" style="width:18px; height:18px; font-size:9px; flex-shrink:0;">${avatarLetter}</div>
                 <div class="comment-body">
                     <div class="comment-text">
                         <span class="comment-user">${item.username}</span>
@@ -601,8 +683,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 const tree = buildCommentTree(data);
                 commentsList.innerHTML = tree.map(renderComment).join('');
-            })
-            .catch(err => console.log("Gagal load komentar:", err));
+            });
     }
 
     function sendComment(text, parentId = null) {
@@ -621,30 +702,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.status === 'ok') {
                     loadComments();
                     setTimeout(() => { scrollContainer.scrollTop = scrollContainer.scrollHeight; }, 150);
-                } else if (data.message) {
-                    alert(data.message);
                 }
-            })
-            .catch(err => console.log("Gagal kirim komentar:", err));
-    }
-
-    function deleteComment(idKomentar) {
-        if (!confirm('Hapus komentar ini?')) return;
-
-        const formData = new FormData();
-        formData.append('action', 'delete');
-        formData.append('id_komentar', idKomentar);
-
-        fetch('../../backend/controllers/hapus_komentar_process.php', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    loadComments();
-                } else if (data.message) {
-                    alert(data.message);
-                }
-            })
-            .catch(err => console.log("Gagal hapus komentar:", err));
+            });
     }
 
     btnKirimKomentar.addEventListener('click', function () {
@@ -677,7 +736,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const deleteLink = e.target.closest('.delete-link');
         if (deleteLink) {
-            deleteComment(deleteLink.dataset.id);
+            if (confirm('Hapus komentar ini?')) {
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                formData.append('id_komentar', deleteLink.dataset.id);
+                fetch('../../backend/controllers/hapus_komentar_process.php', { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => { if (data.status === 'ok') loadComments(); });
+            }
             return;
         }
 
@@ -690,21 +756,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 sendComment(inp.value, parentId);
                 inp.value = '';
             }
-            return;
         }
     });
 
-    commentsList.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter' && e.target.classList.contains('reply-input')) {
-            const box = e.target.closest('.reply-box-container');
-            const sendBtn = box.querySelector('.btn-send-icon-small');
-            const parentId = sendBtn.dataset.parent;
-            sendComment(e.target.value, parentId);
-            e.target.value = '';
-        }
-    });
-
+    // Inisialisasi
     checkLikeStatus();
+    checkFavoriteStatus();
     loadComments();
 });
 </script>
