@@ -10,14 +10,19 @@ if (!$id_user_login) {
 
 $id_album = (int) ($_GET['id_album'] ?? 0);
 if (!$id_album) {
-    header('Location: profile.php?tab=boards');
+    header('Location: profile.php');
     exit;
 }
 
-// 1. Query Data Album
-$qAlbum = "SELECT * FROM album WHERE id_album = ? AND id_user = ?";
+// 1. Query Data Album — TIDAK dibatasi hanya milik user yang login,
+// supaya board pengguna lain juga bisa dibuka lewat profil mereka.
+// Sekalian JOIN ke tabel user biar tahu siapa pemilik album ini.
+$qAlbum = "SELECT a.*, u.username, u.nama_lengkap 
+           FROM album a 
+           JOIN user u ON a.id_user = u.id_user 
+           WHERE a.id_album = ?";
 $stmtA = $koneksi->prepare($qAlbum);
-$stmtA->bind_param("ii", $id_album, $id_user_login);
+$stmtA->bind_param("i", $id_album);
 $stmtA->execute();
 $album = $stmtA->get_result()->fetch_assoc();
 $stmtA->close();
@@ -26,6 +31,17 @@ if (!$album) {
     echo "<p style='padding:20px;'>Album tidak ditemukan.</p>";
     exit;
 }
+
+// Cek apakah board ini milik user yang sedang login atau bukan,
+// dipakai untuk menentukan tombol "Kembali" mengarah ke profil siapa.
+$id_pemilik_album = (int) $album['id_user'];
+$is_own_board     = ($id_pemilik_album === (int) $id_user_login);
+
+$link_kembali = $is_own_board
+    ? 'profile.php'
+    : 'profile_dimata_userlain.php?user_id=' . $id_pemilik_album;
+
+$nama_pemilik = !empty($album['nama_lengkap']) ? $album['nama_lengkap'] : $album['username'];
 
 // 2. Query Foto dalam Album
 $qFotos = "SELECT f.* FROM save_foto sf JOIN foto f ON sf.id_foto = f.id_foto WHERE sf.id_album = ? ORDER BY sf.tanggal_simpan DESC";
@@ -56,6 +72,9 @@ include '../partials/navbar.php';
     .board-header { margin-bottom: 24px; }
     .board-title-main { font-size: 2rem; font-weight: 700; margin: 0 0 6px 0; }
     .board-subtitle { color: #767676; font-size: 0.9rem; margin: 0; }
+    .board-owner { color: #767676; font-size: 0.9rem; margin: 2px 0 0 0; }
+    .board-owner a { color: #111; font-weight: 600; text-decoration: none; }
+    .board-owner a:hover { text-decoration: underline; }
 
     /* LAYOUT FLEXBOX: Foto berjejer ke samping, lalu turun ke bawah jika penuh */
     .flex-gallery {
@@ -124,13 +143,20 @@ include '../partials/navbar.php';
 
 <main class="main-content">
     <div class="board-detail-container">
-        <a href="profile.php?tab=boards" class="back-btn">
+        <a href="<?= htmlspecialchars($link_kembali); ?>" class="back-btn">
             <i class="fa-solid fa-arrow-left"></i> Kembali ke Boards
         </a>
 
         <div class="board-header">
             <h1 class="board-title-main"><?= htmlspecialchars($album['nama_album']); ?></h1>
             <p class="board-subtitle"><?= $resFotos->num_rows; ?> Pin</p>
+            <?php if (!$is_own_board): ?>
+                <p class="board-owner">
+                    Oleh <a href="profile_dimata_userlain.php?user_id=<?= $id_pemilik_album; ?>">
+                        <?= htmlspecialchars($nama_pemilik); ?>
+                    </a>
+                </p>
+            <?php endif; ?>
         </div>
 
         <!-- Galeri Foto Flexbox -->

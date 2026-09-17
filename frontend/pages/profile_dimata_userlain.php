@@ -1,334 +1,243 @@
 <?php
-// Koneksi ke database (Sesuaikan dengan file koneksi kamu)
-// include 'config/koneksi.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Contoh logika menerima ID user lain yang diklik dari parameter URL: profile_dimata_userlain.php?user_id=4
-$user_id_target = isset($_GET['user_id']) ? $_GET['user_id'] : '';
+// Koneksi ke Database
+require_once __DIR__ . '/../../backend/config/connection.php';
 
-/* 
-  Contoh Query Database (Bisa disesuaikan nanti):
-  $queryUser = mysqli_query($koneksi, "SELECT * FROM users WHERE id = '$user_id_target'");
-  $userData = mysqli_fetch_assoc($queryUser);
-*/
+// Ambil ID User Target dari Param URL
+$user_id_target = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+$id_user_login  = $_SESSION['id_user'] ?? 0;
 
-// Data dummy untuk simulasi tampilan
-$nama_user     = "Johanna González";
-$username_user = "jgonzlez0080";
-$followers     = "1k";
-$following     = "5";
+if ($user_id_target <= 0) {
+    echo "<script>alert('Pengguna tidak ditemukan!'); window.location.href='index.php';</script>";
+    exit();
+}
+
+// 1. Fetch Data User Target (Sesuai kolom tabel user)
+$qUser = "SELECT * FROM user WHERE id_user = ?";
+$stmtUser = $koneksi->prepare($qUser);
+$stmtUser->bind_param("i", $user_id_target);
+$stmtUser->execute();
+$resUser = $stmtUser->get_result();
+
+if ($resUser->num_rows === 0) {
+    echo "<p class='text-center mt-5'>Pengguna tidak ditemukan.</p>";
+    exit();
+}
+
+$userData = $resUser->fetch_assoc();
+$stmtUser->close();
+
+$nama_user     = !empty($userData['nama_lengkap']) ? $userData['nama_lengkap'] : $userData['username'];
+$username_user = $userData['username'];
+$bio_user      = $userData['bio'] ?? '';
+$foto_profil   = $userData['foto_profil'] ?? '';
 $inisial       = strtoupper(substr($nama_user, 0, 1));
+
+$upload_path   = "../../backend/uploads/";
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $nama_user; ?> (@<?php echo $username_user; ?>) - Profil</title>
-    
-    <!-- Bootstrap 5 CSS & FontAwesome Icons -->
+    <title><?= htmlspecialchars($nama_user); ?> (@<?= htmlspecialchars($username_user); ?>)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-            background-color: #ffffff;
-            color: #111111;
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: #fff; 
+            color: #111; 
+        }
+        
+        /* Layout Header Profile ala Pinterest: foto kiri, info kanan, rata kiri sejajar dengan board */
+        .profile-header-container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 20px;
+            margin-top: 16px;
+            text-align: left;
         }
 
-        /* Profile Header Styling */
-        .profile-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background-color: #72cb96;
-            color: #111;
-            font-size: 50px;
-            font-weight: 600;
+        .profile-avatar { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            background-color: #72cb96; 
+            color: #111; 
+            font-size: 42px; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            flex-shrink: 0;
+        }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .profile-title-row {
             display: flex;
             align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .profile-action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .profile-name { font-size: 24px; font-weight: 700; margin-bottom: 0; line-height: 1.2; }
+        .profile-username { color: #5f5f5f; font-size: 14px; margin-top: 2px; margin-bottom: 0; }
+        
+        .btn-custom-gray { background-color: #e9e9e9; color: #111; font-weight: 600; border-radius: 24px; padding: 6px 16px; border: none; font-size: 14px; }
+        .btn-custom-red { background-color: #e60023; color: #fff; font-weight: 600; border-radius: 24px; padding: 6px 16px; border: none; font-size: 14px; }
+        
+        /* Board Navigation Title */
+        .board-tab-title {
+            display: flex;
             justify-content: center;
-        }
-
-        .profile-name {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 2px;
-        }
-
-        .profile-username {
-            color: #5f5f5f;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-
-        .profile-stats {
-            font-size: 14px;
-            font-weight: 600;
-            color: #111;
-        }
-
-        /* Action Buttons */
-        .btn-custom-gray {
-            background-color: #e9e9e9;
-            color: #111;
-            font-weight: 600;
-            border-radius: 24px;
-            padding: 10px 18px;
-            border: none;
-        }
-        .btn-custom-gray:hover {
-            background-color: #e2e2e2;
-        }
-
-        .btn-custom-red {
-            background-color: #e60023;
-            color: #ffffff;
-            font-weight: 600;
-            border-radius: 24px;
-            padding: 10px 18px;
-            border: none;
-        }
-        .btn-custom-red:hover {
-            background-color: #ad081b;
-            color: #ffffff;
-        }
-
-        .icon-btn {
-            background: transparent;
-            border: none;
-            font-size: 20px;
-            color: #111;
-            padding: 8px 12px;
-            border-radius: 50%;
-        }
-        .icon-btn:hover {
-            background-color: #f0f0f0;
-        }
-
-        /* Custom Tabs (Collages & Board) */
-        .nav-tabs-custom {
-            border-bottom: none;
-            justify-content: center;
-            gap: 16px;
-            margin-top: 30px;
+            margin-top: 35px;
             margin-bottom: 25px;
+            border-bottom: 1px solid #efefef;
         }
-
-        .nav-tabs-custom .nav-link {
-            border: none;
-            color: #111;
+        .board-tab-title span {
             font-weight: 600;
             font-size: 16px;
-            padding: 8px 4px;
-            background: transparent;
-            position: relative;
-        }
-
-        .nav-tabs-custom .nav-link.active {
             color: #111;
-            background: transparent;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #111;
         }
 
-        .nav-tabs-custom .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background-color: #111;
-            border-radius: 2px;
-        }
+        /* Board Card Layout */
+        .board-card-container { text-decoration: none; color: inherit; display: block; }
+        .board-card { background-color: #e9e9e9; border-radius: 16px; overflow: hidden; cursor: pointer; transition: transform 0.2s ease; }
+        .board-card-container:hover .board-card { transform: translateY(-4px); }
+        .board-cover-grid { display: grid; grid-template-columns: 2fr 1fr; grid-gap: 2px; height: 160px; background-color: #e9e9e9; }
+        .board-cover-grid .main-img { width: 100%; height: 100%; object-fit: cover; }
+        .board-cover-grid .side-imgs { display: grid; grid-template-rows: 1fr 1fr; grid-gap: 2px; height: 100%; }
+        .board-cover-grid .side-imgs img { width: 100%; height: 100%; object-fit: cover; }
+        .empty-slot { background-color: #dcdcdc; width: 100%; height: 100%; }
+        .board-title { font-size: 16px; font-weight: 700; margin-top: 8px; margin-bottom: 2px; }
+        .board-meta { font-size: 13px; color: #5f5f5f; }
 
-        /* Board Grid Styling */
-        .board-card {
-            background-color: #e9e9e9;
-            border-radius: 16px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .board-card:hover {
-            opacity: 0.9;
-        }
-
-        /* Grid Cover 3 Foto dalam Board Card */
-        .board-cover-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            grid-gap: 2px;
-            height: 160px;
-            background-color: #e9e9e9;
-        }
-        .board-cover-grid .main-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .board-cover-grid .side-imgs {
-            display: grid;
-            grid-template-rows: 1fr 1fr;
-            grid-gap: 2px;
-            height: 100%;
-        }
-        .board-cover-grid .side-imgs img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .board-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 8px;
-            margin-bottom: 2px;
-        }
-        .board-meta {
-            font-size: 12px;
-            color: #5f5f5f;
+        /* Sedikit lebih rapat di layar kecil */
+        @media (max-width: 576px) {
+            .profile-avatar {
+                width: 90px;
+                height: 90px;
+                font-size: 36px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container py-4">
+    <!-- MENYAMBUNGKAN KE NAVBAR -->
+    <?php include __DIR__ . '/../partials/navbar.php'; ?>
 
-        <!-- Header Profil User Lain -->
-        <div class="row align-items-center mb-4">
-            <!-- Foto / Avatar User -->
-            <div class="col-auto">
-                <div class="profile-avatar">
-                    <?php echo $inisial; ?>
-                </div>
+    <div class="main-content">
+    <div class="container py-2">
+        <!-- Header Profile Target (Sejajar dan Diturunkan) -->
+        <div class="profile-header-container">
+            <div class="profile-avatar">
+                <?php if (!empty($foto_profil) && file_exists($upload_path . $foto_profil)): ?>
+                    <img src="<?= $upload_path . htmlspecialchars($foto_profil); ?>" alt="Foto Profil">
+                <?php else: ?>
+                    <?= $inisial; ?>
+                <?php endif; ?>
             </div>
 
-            <!-- Detail Info User & Tombol Aksi -->
-            <div class="col">
-                <h1 class="profile-name"><?php echo $nama_user; ?></h1>
-                <div class="profile-username"><?php echo $username_user; ?></div>
-                <div class="profile-stats mb-3"><?php echo $followers; ?> followers · <?php echo $following; ?> following</div>
-
-                <div class="d-flex align-items-center gap-2">
-                    <button class="btn btn-custom-gray">Message</button>
-                    <button class="btn btn-custom-red">Follow</button>
+            <div class="profile-info">
+                <div class="profile-title-row">
+                    <h1 class="profile-name"><?= htmlspecialchars($nama_user); ?></h1>
                 </div>
-            </div>
 
-            <!-- Icon Opsi -->
-            <div class="col-auto align-self-start">
-                <button class="icon-btn" title="Share"><i class="fa-solid fa-upload"></i></button>
-                <button class="icon-btn" title="More options"><i class="fa-solid fa-ellipsis"></i></button>
+                <div class="profile-username">@<?= htmlspecialchars($username_user); ?></div>
+                <?php if(!empty($bio_user)): ?>
+                    <p class="text-muted small mb-0 mt-1"><?= htmlspecialchars($bio_user); ?></p>
+                <?php endif; ?>
+
+                <?php if ($id_user_login != $user_id_target): ?>
+                    <div class="profile-action-row">
+                        <button class="btn btn-custom-gray">Pesan</button>
+                        <button class="btn btn-custom-red">Ikuti</button>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 
-        <!-- Tab Navigasi: Collages & Board -->
-        <ul class="nav nav-tabs nav-tabs-custom" id="profileTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="collages-tab" data-bs-toggle="tab" data-bs-target="#collages-tab-pane" type="button" role="tab">Collages</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="board-tab" data-bs-toggle="tab" data-bs-target="#board-tab-pane" type="button" role="tab">Board</button>
-            </li>
-        </ul>
+        <!-- Section Title (Hanya Board) -->
+        <div class="board-tab-title">
+            <span>Board</span>
+        </div>
 
-        <!-- Konten Tab -->
-        <div class="tab-content" id="profileTabContent">
+        <!-- Konten Board -->
+        <div class="text-start">
+            <div class="row g-3">
+                <?php
+                $qAlbum = "SELECT a.*, 
+                           (SELECT COUNT(*) FROM save_foto sf WHERE sf.id_album = a.id_album) as total_foto 
+                           FROM album a 
+                           WHERE a.id_user = ? 
+                           ORDER BY a.tanggal_dibuat DESC";
+                $stmtA = $koneksi->prepare($qAlbum);
+                $stmtA->bind_param("i", $user_id_target);
+                $stmtA->execute();
+                $resAlbum = $stmtA->get_result();
 
-            <!-- Tab Collages -->
-            <div class="tab-pane fade" id="collages-tab-pane" role="tabpanel">
-                <div class="text-center py-5 text-muted">
-                    <i class="fa-solid fa-layer-group fa-3x mb-3"></i>
-                    <p>Pengguna ini belum membuat collage.</p>
-                </div>
+                if ($resAlbum->num_rows > 0):
+                    while ($album = $resAlbum->fetch_assoc()):
+                        // Ambil 3 foto terbaru dari save_foto berdasarkan id_album
+                        $q3Foto = "SELECT f.lokasi_file 
+                                   FROM save_foto sf 
+                                   JOIN foto f ON sf.id_foto = f.id_foto 
+                                   WHERE sf.id_album = ? 
+                                   ORDER BY sf.tanggal_simpan DESC LIMIT 3";
+                        $stmt3 = $koneksi->prepare($q3Foto);
+                        $stmt3->bind_param("i", $album['id_album']);
+                        $stmt3->execute();
+                        $res3Foto = $stmt3->get_result();
+                        $fotos = [];
+                        while ($f = $res3Foto->fetch_assoc()) { $fotos[] = $f['lokasi_file']; }
+                        $stmt3->close();
+                ?>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a href="detail_board.php?id_album=<?= $album['id_album']; ?>" class="board-card-container">
+                            <div class="board-card mb-2">
+                                <div class="board-cover-grid">
+                                    <?= isset($fotos[0]) ? '<img src="'.$upload_path.htmlspecialchars($fotos[0]).'" class="main-img">' : '<div class="empty-slot"></div>'; ?>
+                                    <div class="side-imgs">
+                                        <?= isset($fotos[1]) ? '<img src="'.$upload_path.htmlspecialchars($fotos[1]).'">' : '<div class="empty-slot"></div>'; ?>
+                                        <?= isset($fotos[2]) ? '<img src="'.$upload_path.htmlspecialchars($fotos[2]).'">' : '<div class="empty-slot"></div>'; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="board-title"><?= htmlspecialchars($album['nama_album']); ?></div>
+                            <div class="board-meta"><?= $album['total_foto']; ?> Pin</div>
+                        </a>
+                    </div>
+                <?php endwhile; else: ?>
+                    <div class="text-center py-5 text-muted w-100"><p>Belum ada board publik.</p></div>
+                <?php endif; $stmtA->close(); ?>
             </div>
-
-            <!-- Tab Board -->
-            <div class="tab-pane fade show active" id="board-tab-pane" role="tabpanel">
-                <div class="row g-3">
-
-                    <!-- Card Board 1 -->
-                    <div class="col-6 col-md-4 col-lg-2-4">
-                        <div class="board-card mb-2">
-                            <div class="board-cover-grid">
-                                <img src="https://picsum.photos/300/400?random=1" class="main-img" alt="Cover">
-                                <div class="side-imgs">
-                                    <img src="https://picsum.photos/200/200?random=2" alt="Thumb 1">
-                                    <img src="https://picsum.photos/200/200?random=3" alt="Thumb 2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="board-title">peinados</div>
-                        <div class="board-meta">462 Pins · 3 mo</div>
-                    </div>
-
-                    <!-- Card Board 2 -->
-                    <div class="col-6 col-md-4 col-lg-2-4">
-                        <div class="board-card mb-2">
-                            <div class="board-cover-grid">
-                                <img src="https://picsum.photos/300/400?random=4" class="main-img" alt="Cover">
-                                <div class="side-imgs">
-                                    <img src="https://picsum.photos/200/200?random=5" alt="Thumb 1">
-                                    <img src="https://picsum.photos/200/200?random=6" alt="Thumb 2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="board-title">videos peinados</div>
-                        <div class="board-meta">83 Pins · 3 mo</div>
-                    </div>
-
-                    <!-- Card Board 3 -->
-                    <div class="col-6 col-md-4 col-lg-2-4">
-                        <div class="board-card mb-2">
-                            <div class="board-cover-grid">
-                                <img src="https://picsum.photos/300/400?random=7" class="main-img" alt="Cover">
-                                <div class="side-imgs">
-                                    <img src="https://picsum.photos/200/200?random=8" alt="Thumb 1">
-                                    <img src="https://picsum.photos/200/200?random=9" alt="Thumb 2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="board-title">decoración cuarto para bebé</div>
-                        <div class="board-meta">6 Pins · 7 mo</div>
-                    </div>
-
-                    <!-- Card Board 4 -->
-                    <div class="col-6 col-md-4 col-lg-2-4">
-                        <div class="board-card mb-2">
-                            <div class="board-cover-grid">
-                                <img src="https://picsum.photos/300/400?random=10" class="main-img" alt="Cover">
-                                <div class="side-imgs">
-                                    <img src="https://picsum.photos/200/200?random=11" alt="Thumb 1">
-                                    <img src="https://picsum.photos/200/200?random=12" alt="Thumb 2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="board-title">decoración Timoteo</div>
-                        <div class="board-meta">500 Pins · 7 mo</div>
-                    </div>
-
-                    <!-- Card Board 5 -->
-                    <div class="col-6 col-md-4 col-lg-2-4">
-                        <div class="board-card mb-2">
-                            <div class="board-cover-grid">
-                                <img src="https://picsum.photos/300/400?random=13" class="main-img" alt="Cover">
-                                <div class="side-imgs">
-                                    <img src="https://picsum.photos/200/200?random=14" alt="Thumb 1">
-                                    <img src="https://picsum.photos/200/200?random=15" alt="Thumb 2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="board-title">decoración uñas</div>
-                        <div class="board-meta">510 Pins · 10 mo</div>
-                    </div>
-
-                </div>
-            </div>
-
         </div>
     </div>
-
-    <!-- Bootstrap 5 JS -->
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -168,7 +168,15 @@ $uploader_id = $foto['id_user'];
         align-items: center;
         gap: 10px;
         margin-bottom: 10px;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
     }
+    .uploader-box:hover {
+        opacity: 0.8;
+    }
+
     .avatar-circle {
         width: 30px;
         height: 30px;
@@ -387,13 +395,14 @@ $uploader_id = $foto['id_user'];
                         <a href="<?php echo $file_path; ?>" download class="btn-save-red">Save</a>
                     </div>
 
-                    <div class="uploader-box">
+                    <!-- UPLOADER BOX (SUDAH DIHUBUNGKAN KE PROFILE) -->
+                    <a href="profile_dimata_userlain.php?user_id=<?php echo $foto['id_user']; ?>" class="uploader-box">
                         <div class="avatar-circle"><?php echo strtoupper(substr($foto['username'], 0, 1)); ?></div>
                         <div>
                             <div style="font-weight:700; font-size:13px;"><?php echo htmlspecialchars($foto['nama_lengkap']); ?></div>
                             <div style="font-size:11px; color:#767676;">@<?php echo htmlspecialchars($foto['username']); ?></div>
                         </div>
-                    </div>
+                    </a>
 
                     <h1 class="pin-title-text"><?php echo htmlspecialchars($foto['judul_foto']); ?></h1>
                     <?php if (!empty($foto['deskripsi_foto'])): ?>
@@ -445,7 +454,7 @@ $uploader_id = $foto['id_user'];
     <img id="lightboxImg" class="lightbox-img" src="" alt="Full Image">
 </div>
 
-<!-- MODAL FAVORIT ALA TIKTOK -->
+<!-- MODAL FAVORIT -->
 <div id="modalFavorit" style="display:none; position:fixed; z-index:99999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
     <div style="background:#fff; width:320px; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.15);">
         <h3 style="margin-top:0; font-size:16px; font-weight:700; text-align:center; color:#111;">Simpan ke Album Favorit</h3>
@@ -573,7 +582,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.status === 'ok') {
                     modalFavorit.style.display = 'none';
-                    // DIARAHKAN KE TAB COLLAGES DI PROFILE
                     window.location.href = 'profile.php?tab=collages';
                 }
             });
