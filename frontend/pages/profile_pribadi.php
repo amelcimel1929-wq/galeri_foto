@@ -1,33 +1,47 @@
 <?php 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 include '../../backend/config/connection.php';
 
 $id_user_login = $_SESSION['id_user'] ?? null;
 
-$username = 'amelcimel';
-$handle = 'amelcimel1929';
-$bio = 'Add a short bio to make your profile your own';
-$foto_profil = '';
-
-if ($id_user_login && isset($conn)) {
-    $query = "SELECT * FROM user WHERE id_user = '$id_user_login'";
-    $result = mysqli_query($conn, $query);
-
-    if ($result && mysqli_num_rows($result) > 0) {
-        $data = mysqli_fetch_assoc($result);
-        $username = !empty($data['nama_lengkap']) 
-            ? $data['nama_lengkap'] 
-            : ($data['username'] ?? $username);
-        $handle = !empty($data['username']) 
-            ? $data['username'] 
-            : $handle;
-        $bio = !empty($data['bio']) 
-            ? $data['bio'] 
-            : $bio;
-        $foto_profil = $data['foto_profil'] ?? '';
-    }
+// Jika user belum login, alihkan ke login
+if (!$id_user_login) {
+    header('Location: ../auth/login.php');
+    exit;
 }
+
+// Data Default Fallback
+$username = $_SESSION['username'] ?? 'User';
+$handle = $_SESSION['username'] ?? 'user123';
+$bio = 'Add a short bio to make your profile your own';
+$foto_profil = $_SESSION['foto_profil'] ?? '';
+
+// Ambil data profile TERBARU dari database
+if (isset($koneksi) || isset($conn)) {
+    $db = $koneksi ?? $conn;
+    $qUser = $db->prepare("SELECT username, nama_lengkap, email, bio, foto_profil FROM user WHERE id_user = ?");
+    $qUser->bind_param("i", $id_user_login);
+    $qUser->execute();
+    $resUser = $qUser->get_result();
+    
+    if ($data = $resUser->fetch_assoc()) {
+        $username = !empty($data['nama_lengkap']) ? $data['nama_lengkap'] : ($data['username'] ?? $username);
+        $handle = !empty($data['username']) ? $data['username'] : $handle;
+        $bio = !empty($data['bio']) ? $data['bio'] : $bio;
+        $foto_profil = $data['foto_profil'] ?? '';
+        
+        $_SESSION['username'] = $data['username'];
+        $_SESSION['email'] = $data['email'];
+        $_SESSION['foto_profil'] = $data['foto_profil'];
+    }
+    $qUser->close();
+}
+
+// Ambil tab aktif dari URL, default ke 'liked'
+$tab = $_GET['tab'] ?? 'liked';
 
 include '../partials/header.php';
 include '../partials/navbar.php';
@@ -35,7 +49,7 @@ include '../partials/navbar.php';
 
 <style>
 /* =====================================
-   RESET
+   RESET & BASE STYLES
 ===================================== */
 * {
     box-sizing: border-box;
@@ -49,14 +63,14 @@ body {
 }
 
 /* =====================================
-   CONTAINER PROFIL
+   CONTAINER PROFIL (Diturunkan agar tidak tertutup Navbar)
 ===================================== */
 .pinterest-profile-main {
     width: 100%;
-    min-height: calc(100vh - 70px);
-    padding-top: 60px;   /* Diturunkan sedikit lagi dari search bar */
-    padding-left: 55px;  /* Tetap rapat di sebelah sidebar kiri */
-    padding-right: 24px;
+    min-height: calc(100vh - 80px);
+    padding-top: 90px;   /* Jarak aman di bawah Search Bar Navbar */
+    padding-left: 140px; /* Disamakan dengan posisi avatar pada gambar acuan */
+    padding-right: 140px;
     padding-bottom: 60px;
 }
 
@@ -66,8 +80,9 @@ body {
 .profile-header-container {
     display: flex;
     align-items: flex-start;
-    gap: 20px;
-    margin-bottom: 0;
+    gap: 24px;
+    margin-bottom: 20px;
+    padding-left: 0; /* Avatar jadi titik acuan kiri */
 }
 
 /* =====================================
@@ -76,17 +91,19 @@ body {
 .avatar-wrapper {
     position: relative;
     flex-shrink: 0;
+    width: 110px;
+    height: 110px;
 }
 
 .avatar-circle {
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     background-color: #7bd6a8;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 44px;
+    font-size: 48px;
     font-weight: 600;
     color: #111111;
     overflow: hidden;
@@ -100,8 +117,8 @@ body {
 
 .avatar-edit-icon {
     position: absolute;
-    bottom: -2px;
-    right: -2px;
+    bottom: 2px;
+    right: 2px;
     width: 28px;
     height: 28px;
     border-radius: 50%;
@@ -112,9 +129,9 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
     color: #111111;
     font-size: 12px;
-    text-decoration: none;
     cursor: pointer;
     border: 1px solid #e2e2e2;
+    z-index: 2;
 }
 
 .avatar-edit-icon:hover {
@@ -122,13 +139,13 @@ body {
 }
 
 /* =====================================
-   INFORMASI PROFIL (SEBELAH AVATAR)
+   INFORMASI PROFIL
 ===================================== */
 .profile-info {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding-top: 4px;
+    padding-top: 2px;
 }
 
 .profile-name {
@@ -142,20 +159,20 @@ body {
 .profile-handle {
     font-size: 14px;
     color: #5f5f5f;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .profile-stats {
     font-size: 14px;
     font-weight: 600;
     color: #111111;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .profile-bio {
     font-size: 14px;
     color: #111111;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -197,118 +214,59 @@ body {
 }
 
 /* =====================================
-   TAB CREATED / SAVED
+   TAB NAVIGASI (Liked, Boards, Collages - Tengah)
 ===================================== */
 .tabs-container {
     display: flex;
-    justify-content: center;
+    justify-content: center; /* Tetap di tengah sesuai gambar acuan */
     align-items: center;
-    gap: 24px;
+    gap: 16px;
     width: 100%;
-    margin-top: 40px;
-    margin-bottom: 30px;
+    margin-top: 24px;
+    margin-bottom: 24px;
 }
 
-.tab-btn {
-    background: none;
-    border: none;
+.tab-item {
+    text-decoration: none;
+    color: #111111;
     font-size: 16px;
     font-weight: 600;
-    color: #111111;
-    padding: 0 0 8px 0;
-    cursor: pointer;
-    position: relative;
+    padding: 8px 20px;
+    border-radius: 20px;
+    transition: background 0.2s;
 }
 
-.tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
+.tab-item.active {
     background-color: #111111;
-    border-radius: 2px;
+    color: #ffffff;
 }
 
 /* =====================================
-   AREA KOSONG TENGAH
+   AREA KONTEN TAB (disejajarkan dgn avatar/icon profil)
 ===================================== */
-.empty-state-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+#tab-content {
     width: 100%;
-    margin-top: 20px;
-}
-
-.palette-circle-bg {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    background-color: #f4e4f8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 14px;
-}
-
-.palette-icon {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: #e9bce9;
-    transform: rotate(-12deg);
-}
-
-.palette-icon::before {
-    content: '';
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    background: #f4e4f8;
-    border-radius: 50%;
-    right: 10px;
-    top: 15px;
-}
-
-.palette-dot {
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-}
-
-.dot-1 { background: #a33a96; left: 15px; top: 22px; }
-.dot-2 { background: #cf71ad; left: 20px; top: 51px; }
-.dot-3 { background: #e99b35; left: 45px; top: 70px; }
-.dot-4 { background: #8d1e58; left: 68px; top: 47px; }
-.dot-5 { background: #f15b36; left: 72px; top: 20px; }
-.dot-6 { background: #d66bd0; left: 43px; top: 33px; }
-
-.palette-brush {
-    position: absolute;
-    width: 6px;
-    height: 60px;
-    background: #9a5b12;
-    top: -20px;
-    right: -5px;
-    transform: rotate(45deg);
-    border-radius: 2px;
-}
-
-.empty-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #111111;
     margin: 0;
-    text-align: center;
+    padding: 0;
+}
+
+#tab-content > * {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+#tab-content .row,
+#tab-content .grid,
+#tab-content .masonry,
+#tab-content [class*="gallery"],
+#tab-content [class*="pin"] {
+    justify-content: flex-start !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
 }
 
 /* =====================================
-   CREATE BUTTON (FLOATING BOTTOM RIGHT)
+   CREATE BUTTON FLOATING
 ===================================== */
 .floating-create-btn {
     position: fixed;
@@ -333,18 +291,83 @@ body {
 }
 
 /* =====================================
-   RESPONSIVE
+   MODAL EDIT FOTO PROFIL
 ===================================== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #ffffff;
+    padding: 35px 40px;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #111;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 22px;
+    cursor: pointer;
+    color: #666;
+}
+
+.btn-choose-photo {
+    width: 100%;
+    background-color: #e60023;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-choose-photo:hover {
+    background-color: #ad081b;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .pinterest-profile-main {
+        padding-left: 60px;
+        padding-right: 60px;
+    }
+}
+
 @media (max-width: 768px) {
     .pinterest-profile-main {
         padding-left: 16px;
         padding-right: 16px;
-        padding-top: 30px;
+        padding-top: 80px;
     }
 }
 </style>
 
-<!-- HALAMAN PROFIL -->
+<!-- HALAMAN PROFIL UTAMA -->
 <div class="pinterest-profile-main">
 
     <!-- HEADER PROFIL -->
@@ -354,25 +377,25 @@ body {
         <div class="avatar-wrapper">
             <div class="avatar-circle">
                 <?php if (!empty($foto_profil)): ?>
-                    <img src="../../backend/uploads/<?php echo htmlspecialchars($foto_profil); ?>" alt="Profile">
+                    <img src="../../uploads/<?= htmlspecialchars($foto_profil); ?>?v=<?= time(); ?>" alt="Profile Picture">
                 <?php else: ?>
-                    <?php echo strtoupper(substr($username, 0, 1)); ?>
+                    <?= strtoupper(substr($username, 0, 1)); ?>
                 <?php endif; ?>
             </div>
 
-            <a href="#" class="avatar-edit-icon" title="Edit Profile Picture">
+            <button type="button" class="avatar-edit-icon" id="openModalBtn" title="Change profile picture">
                 <i class="fa-solid fa-pencil"></i>
-            </a>
+            </button>
         </div>
 
         <!-- INFORMASI USER -->
         <div class="profile-info">
             <h1 class="profile-name">
-                <?php echo htmlspecialchars($username); ?>
+                <?= htmlspecialchars($username); ?>
             </h1>
 
             <div class="profile-handle">
-                <?php echo htmlspecialchars($handle); ?>
+                <?= htmlspecialchars($handle); ?>
             </div>
 
             <div class="profile-stats">
@@ -381,7 +404,7 @@ body {
 
             <div class="profile-bio">
                 <span>
-                    <?php echo htmlspecialchars($bio); ?>
+                    <?= htmlspecialchars($bio); ?>
                 </span>
                 <i class="fa-solid fa-pencil bio-pencil"></i>
             </div>
@@ -392,36 +415,25 @@ body {
                     Share profile
                 </button>
 
-                <button class="btn-pinterest">
+                <a href="../../frontend/pages/deskripsi.php" class="btn-pinterest" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-pencil"></i>
                     Edit profile
-                </button>
+                </a>
             </div>
         </div>
 
     </div>
 
-    <!-- TAB -->
+    <!-- TAB NAVIGASI (Liked, Boards, Collages - Posisi Tengah) -->
     <div class="tabs-container">
-        <button class="tab-btn active">Created</button>
-        <button class="tab-btn">Saved</button>
+        <a href="?tab=liked" data-tab="liked" class="tab-item <?= $tab === 'liked' ? 'active' : '' ?>">Liked</a>
+        <a href="?tab=boards" data-tab="boards" class="tab-item <?= $tab === 'boards' ? 'active' : '' ?>">Boards</a>
+        <a href="?tab=collages" data-tab="collages" class="tab-item <?= $tab === 'collages' ? 'active' : '' ?>">Collages</a>
     </div>
 
-    <!-- AREA KOSONG -->
-    <div class="empty-state-section">
-        <div class="palette-circle-bg">
-            <div class="palette-icon">
-                <span class="palette-dot dot-1"></span>
-                <span class="palette-dot dot-2"></span>
-                <span class="palette-dot dot-3"></span>
-                <span class="palette-dot dot-4"></span>
-                <span class="palette-dot dot-5"></span>
-                <span class="palette-dot dot-6"></span>
-                <span class="palette-brush"></span>
-            </div>
-        </div>
-
-        <h2 class="empty-title">Create your first Pin</h2>
+    <!-- DYNAMIC TAB CONTENT -->
+    <div id="tab-content">
+        <?php include 'get_tab_content.php'; ?>
     </div>
 
     <!-- BUTTON CREATE FLOATING -->
@@ -430,6 +442,54 @@ body {
     </a>
 
 </div>
+
+<!-- MODAL POP-UP EDIT FOTO PROFIL -->
+<div id="avatarModal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="modal-close" id="closeModalBtn">&times;</span>
+        <h2>Change your picture</h2>
+        
+        <form action="../../backend/controllers/ganti_profile_process.php" method="POST" enctype="multipart/form-data">
+            <input type="file" name="foto_profil" id="fileInput" accept="image/*" style="display: none;" required onchange="this.form.submit()">
+            <button type="button" class="btn-choose-photo" onclick="document.getElementById('fileInput').click()">Choose photo</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Logic Modal Pop-up Foto
+const modal = document.getElementById('avatarModal');
+const openBtn = document.getElementById('openModalBtn');
+const closeBtn = document.getElementById('closeModalBtn');
+
+if (openBtn) openBtn.onclick = () => modal.style.display = 'flex';
+if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
+
+window.onclick = (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+};
+
+// AJAX Script Pindah Tab Tanpa Reload
+document.querySelectorAll('.tab-item').forEach(tab => {
+    tab.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const selectedTab = this.dataset.tab;
+
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        window.history.pushState({}, '', '?tab=' + selectedTab);
+
+        fetch(`get_tab_content.php?tab=${selectedTab}&_t=${new Date().getTime()}`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('tab-content').innerHTML = html;
+            })
+            .catch(err => console.error('Gagal memuat tab:', err));
+    });
+});
+</script>
 
 </body>
 </html>
