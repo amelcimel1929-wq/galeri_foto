@@ -15,7 +15,7 @@ if ($user_id_target <= 0) {
     exit();
 }
 
-// 1. Fetch Data User Target (Sesuai kolom tabel user)
+// Fetch Data User Target
 $qUser = "SELECT * FROM user WHERE id_user = ?";
 $stmtUser = $koneksi->prepare($qUser);
 $stmtUser->bind_param("i", $user_id_target);
@@ -53,7 +53,7 @@ $upload_path   = "../../backend/uploads/";
             color: #111; 
         }
         
-        /* Layout Header Profile ala Pinterest: foto kiri, info kanan, rata kiri sejajar dengan board */
+        /* Layout Header Profile */
         .profile-header-container {
             display: flex;
             flex-direction: row;
@@ -107,7 +107,7 @@ $upload_path   = "../../backend/uploads/";
         .btn-custom-gray { background-color: #e9e9e9; color: #111; font-weight: 600; border-radius: 24px; padding: 6px 16px; border: none; font-size: 14px; }
         .btn-custom-red { background-color: #e60023; color: #fff; font-weight: 600; border-radius: 24px; padding: 6px 16px; border: none; font-size: 14px; }
         
-        /* Board Navigation Title */
+        /* Navigation Title */
         .board-tab-title {
             display: flex;
             justify-content: center;
@@ -123,19 +123,52 @@ $upload_path   = "../../backend/uploads/";
             border-bottom: 3px solid #111;
         }
 
-        /* Board Card Layout */
-        .board-card-container { text-decoration: none; color: inherit; display: block; }
-        .board-card { background-color: #e9e9e9; border-radius: 16px; overflow: hidden; cursor: pointer; transition: transform 0.2s ease; }
-        .board-card-container:hover .board-card { transform: translateY(-4px); }
-        .board-cover-grid { display: grid; grid-template-columns: 2fr 1fr; grid-gap: 2px; height: 160px; background-color: #e9e9e9; }
-        .board-cover-grid .main-img { width: 100%; height: 100%; object-fit: cover; }
-        .board-cover-grid .side-imgs { display: grid; grid-template-rows: 1fr 1fr; grid-gap: 2px; height: 100%; }
-        .board-cover-grid .side-imgs img { width: 100%; height: 100%; object-fit: cover; }
-        .empty-slot { background-color: #dcdcdc; width: 100%; height: 100%; }
-        .board-title { font-size: 16px; font-weight: 700; margin-top: 8px; margin-bottom: 2px; }
-        .board-meta { font-size: 13px; color: #5f5f5f; }
+        /* Pinterest Masonry Grid Layout */
+        .pin-grid {
+            column-count: 5;
+            column-gap: 16px;
+        }
 
-        /* Sedikit lebih rapat di layar kecil */
+        @media (max-width: 1200px) { .pin-grid { column-count: 4; } }
+        @media (max-width: 992px)  { .pin-grid { column-count: 3; } }
+        @media (max-width: 768px)  { .pin-grid { column-count: 2; } }
+
+        .pin-item {
+            break-inside: avoid;
+            margin-bottom: 16px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .pin-card-masonry {
+            border-radius: 16px;
+            overflow: hidden;
+            background-color: #e9e9e9;
+            position: relative;
+            transition: opacity 0.2s ease;
+        }
+
+        .pin-card-masonry:hover {
+            opacity: 0.9;
+        }
+
+        .pin-card-masonry img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 16px;
+        }
+
+        .pin-title-text {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 6px;
+            padding-left: 4px;
+            color: #111;
+            word-wrap: break-word;
+        }
+
         @media (max-width: 576px) {
             .profile-avatar {
                 width: 90px;
@@ -147,97 +180,81 @@ $upload_path   = "../../backend/uploads/";
 </head>
 <body>
 
-    <!-- MENYAMBUNGKAN KE NAVBAR -->
+    <!-- NAVBAR -->
     <?php include __DIR__ . '/../partials/navbar.php'; ?>
 
     <div class="main-content">
-    <div class="container py-2">
-        <!-- Header Profile Target (Sejajar dan Diturunkan) -->
-        <div class="profile-header-container">
-            <div class="profile-avatar">
-                <?php if (!empty($foto_profil) && file_exists($upload_path . $foto_profil)): ?>
-                    <img src="<?= $upload_path . htmlspecialchars($foto_profil); ?>" alt="Foto Profil">
-                <?php else: ?>
-                    <?= $inisial; ?>
-                <?php endif; ?>
-            </div>
-
-            <div class="profile-info">
-                <div class="profile-title-row">
-                    <h1 class="profile-name"><?= htmlspecialchars($nama_user); ?></h1>
+        <div class="container-fluid px-4 py-2">
+            <!-- Header Profile Target -->
+            <div class="profile-header-container">
+                <div class="profile-avatar">
+                    <?php if (!empty($foto_profil) && file_exists($upload_path . $foto_profil)): ?>
+                        <img src="<?= $upload_path . htmlspecialchars($foto_profil); ?>" alt="Foto Profil">
+                    <?php else: ?>
+                        <?= $inisial; ?>
+                    <?php endif; ?>
                 </div>
 
-                <div class="profile-username">@<?= htmlspecialchars($username_user); ?></div>
-                <?php if(!empty($bio_user)): ?>
-                    <p class="text-muted small mb-0 mt-1"><?= htmlspecialchars($bio_user); ?></p>
-                <?php endif; ?>
-
-                <?php if ($id_user_login != $user_id_target): ?>
-                    <div class="profile-action-row">
-                        <button class="btn btn-custom-gray">Pesan</button>
-                        <button class="btn btn-custom-red">Ikuti</button>
+                <div class="profile-info">
+                    <div class="profile-title-row">
+                        <h1 class="profile-name"><?= htmlspecialchars($nama_user); ?></h1>
                     </div>
-                <?php endif; ?>
+
+                    <div class="profile-username">@<?= htmlspecialchars($username_user); ?></div>
+                    <?php if(!empty($bio_user)): ?>
+                        <p class="text-muted small mb-0 mt-1"><?= htmlspecialchars($bio_user); ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($id_user_login != $user_id_target): ?>
+                        <div class="profile-action-row">
+                            <button class="btn btn-custom-gray">Pesan</button>
+                            <button class="btn btn-custom-red">Ikuti</button>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
 
-        <!-- Section Title (Hanya Board) -->
-        <div class="board-tab-title">
-            <span>Board</span>
-        </div>
+            <!-- Tab Title -->
+            <div class="board-tab-title">
+                <span>Created</span>
+            </div>
 
-        <!-- Konten Board -->
-        <div class="text-start">
-            <div class="row g-3">
+            <!-- Pinterest Masonry Grid -->
+            <div class="pin-grid">
                 <?php
-                $qAlbum = "SELECT a.*, 
-                           (SELECT COUNT(*) FROM save_foto sf WHERE sf.id_album = a.id_album) as total_foto 
-                           FROM album a 
-                           WHERE a.id_user = ? 
-                           ORDER BY a.tanggal_dibuat DESC";
-                $stmtA = $koneksi->prepare($qAlbum);
-                $stmtA->bind_param("i", $user_id_target);
-                $stmtA->execute();
-                $resAlbum = $stmtA->get_result();
+                // Query mengambil foto yang diupload user target
+                $qFoto = "SELECT * FROM foto WHERE id_user = ? ORDER BY tanggal_ungahan DESC";
+                $stmtF = $koneksi->prepare($qFoto);
+                $stmtF->bind_param("i", $user_id_target);
+                $stmtF->execute();
+                $resFoto = $stmtF->get_result();
 
-                if ($resAlbum->num_rows > 0):
-                    while ($album = $resAlbum->fetch_assoc()):
-                        // Ambil 3 foto terbaru dari save_foto berdasarkan id_album
-                        $q3Foto = "SELECT f.lokasi_file 
-                                   FROM save_foto sf 
-                                   JOIN foto f ON sf.id_foto = f.id_foto 
-                                   WHERE sf.id_album = ? 
-                                   ORDER BY sf.tanggal_simpan DESC LIMIT 3";
-                        $stmt3 = $koneksi->prepare($q3Foto);
-                        $stmt3->bind_param("i", $album['id_album']);
-                        $stmt3->execute();
-                        $res3Foto = $stmt3->get_result();
-                        $fotos = [];
-                        while ($f = $res3Foto->fetch_assoc()) { $fotos[] = $f['lokasi_file']; }
-                        $stmt3->close();
+                if ($resFoto->num_rows > 0):
+                    while ($foto = $resFoto->fetch_assoc()):
                 ?>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <a href="detail_board.php?id_album=<?= $album['id_album']; ?>" class="board-card-container">
-                            <div class="board-card mb-2">
-                                <div class="board-cover-grid">
-                                    <?= isset($fotos[0]) ? '<img src="'.$upload_path.htmlspecialchars($fotos[0]).'" class="main-img">' : '<div class="empty-slot"></div>'; ?>
-                                    <div class="side-imgs">
-                                        <?= isset($fotos[1]) ? '<img src="'.$upload_path.htmlspecialchars($fotos[1]).'">' : '<div class="empty-slot"></div>'; ?>
-                                        <?= isset($fotos[2]) ? '<img src="'.$upload_path.htmlspecialchars($fotos[2]).'">' : '<div class="empty-slot"></div>'; ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="board-title"><?= htmlspecialchars($album['nama_album']); ?></div>
-                            <div class="board-meta"><?= $album['total_foto']; ?> Pin</div>
-                        </a>
+                    <a href="detail.php?id=<?= $foto['id_foto']; ?>" class="pin-item">
+                        <div class="pin-card-masonry">
+                            <img src="<?= $upload_path . htmlspecialchars($foto['lokasi_file']); ?>" alt="<?= htmlspecialchars($foto['judul_foto']); ?>">
+                        </div>
+                        <?php if (!empty($foto['judul_foto'])): ?>
+                            <div class="pin-title-text"><?= htmlspecialchars($foto['judul_foto']); ?></div>
+                        <?php endif; ?>
+                    </a>
+                <?php 
+                    endwhile; 
+                else: 
+                ?>
+                    <div class="text-center py-5 text-muted w-100" style="column-span: all;">
+                        <p>Pengguna ini belum mengunggah foto apapun.</p>
                     </div>
-                <?php endwhile; else: ?>
-                    <div class="text-center py-5 text-muted w-100"><p>Belum ada board publik.</p></div>
-                <?php endif; $stmtA->close(); ?>
+                <?php 
+                endif; 
+                $stmtF->close(); 
+                ?>
             </div>
         </div>
     </div>
-    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/bootstrap.bundle.min.js"></script>
 </body>
 </html>
