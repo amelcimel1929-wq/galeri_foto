@@ -362,13 +362,12 @@ $uploader_id = $foto['id_user'];
         <div class="pin-main-card">
             <!-- WADAH GAMBAR DENGAN TOMBOL PANAH KEMBALI DI DALAMNYA -->
             <div class="pin-photo-container">
-                <!-- TOMBOL KEMBALI KE galeri_foto/index.php -->
-            <!-- TOMBOL KEMBALI (NAIK 2 FOLDER KE INDEX.PHP) -->
-<a href="../../index.php" class="btn-back-overlay" title="Kembali" onclick="event.stopPropagation();">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-    </svg>
-</a>
+                <!-- TOMBOL KEMBALI (NAIK 2 FOLDER KE INDEX.PHP) -->
+                <a href="../../index.php" class="btn-back-overlay" title="Kembali" onclick="event.stopPropagation();">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </a>
 
                 <img src="<?php echo $file_path; ?>" alt="<?php echo htmlspecialchars($foto['judul_foto']); ?>" onclick="openLightbox('<?php echo $file_path; ?>')">
             </div>
@@ -389,6 +388,13 @@ $uploader_id = $foto['id_user'];
                             <button id="btnCommentIcon" class="icon-btn" title="Komentar">
                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2">
                                     <path d="M12 3c5.5 0 10 3.58 10 8 0 2.8-1.8 5.25-4.5 6.75V21l-3.5-2h-2c-5.5 0-10-3.58-10-8s4.5-8 10-8z"/>
+                                </svg>
+                            </button>
+
+                            <!-- TOMBOL FAVORIT -->
+                            <button id="btnFavorite" class="icon-btn" title="Favorit">
+                                <svg id="favoriteIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                                 </svg>
                             </button>
                         </div>
