@@ -3,15 +3,32 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Tarik email dari database jika belum tersimpan di session
-if (!isset($_SESSION['email']) && isset($_SESSION['id_user']) && isset($koneksi)) {
+// Koneksi ke database jika variabel $koneksi belum ada
+if (!isset($koneksi)) {
+    include_once __DIR__ . '/../../backend/config/connection.php';
+}
+
+// Variabel default
+$foto_profil_nav = '';
+$username_nav = $_SESSION['username'] ?? 'User';
+$email_nav = $_SESSION['email'] ?? '';
+
+// Ambil data foto_profil, username, & email TERBARU langsung dari Database
+if (isset($_SESSION['id_user']) && isset($koneksi)) {
     $id_user_nav = $_SESSION['id_user'];
-    $qUserNav = $koneksi->prepare("SELECT email FROM user WHERE id_user = ?");
+    $qUserNav = $koneksi->prepare("SELECT username, email, foto_profil FROM user WHERE id_user = ?");
     $qUserNav->bind_param("i", $id_user_nav);
     $qUserNav->execute();
     $resUserNav = $qUserNav->get_result();
     if ($dataNav = $resUserNav->fetch_assoc()) {
-        $_SESSION['email'] = $dataNav['email'];
+        $username_nav = $dataNav['username'];
+        $email_nav = $dataNav['email'];
+        $foto_profil_nav = $dataNav['foto_profil'];
+        
+        // Simpan juga ke session agar konsisten
+        $_SESSION['email'] = $email_nav;
+        $_SESSION['username'] = $username_nav;
+        $_SESSION['foto_profil'] = $foto_profil_nav;
     }
     $qUserNav->close();
 }
@@ -141,6 +158,15 @@ body {
     font-size: 14px;
     text-decoration: none;
     border: 1px solid #333;
+    overflow: hidden;
+}
+
+/* Custom CSS khusus agar gambar profil pas rapi */
+.nav-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .btn-dropdown-trigger {
@@ -203,6 +229,7 @@ body {
     background-color: #e60023;
     color: #fff;
     border: none;
+    flex-shrink: 0;
 }
 
 .user-details {
@@ -316,8 +343,13 @@ body {
     </div>
     
     <div class="top-nav-right">
+        <!-- Icon Profil Kecil Navbar (Otomatis ganti jika ada foto) -->
         <a href="/galeri_foto/frontend/pages/profile.php" class="profile-avatar-small" title="Profil Saya">
-            <?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>
+            <?php if (!empty($foto_profil_nav)): ?>
+                <img src="/galeri_foto/uploads/<?php echo htmlspecialchars($foto_profil_nav); ?>?v=<?php echo time(); ?>" alt="Profile" class="nav-avatar-img">
+            <?php else: ?>
+                <?php echo strtoupper(substr($username_nav, 0, 1)); ?>
+            <?php endif; ?>
         </a>
 
         <button type="button" id="btnUserMenu" class="btn-dropdown-trigger">
@@ -328,13 +360,18 @@ body {
             <div class="dropdown-header-label">Currently in</div>
             
             <a href="/galeri_foto/frontend/pages/profile.php" class="user-profile-info">
+                <!-- Icon Profil Besar Dropdown (Otomatis ganti jika ada foto) -->
                 <div class="profile-avatar-small avatar-large">
-                    <?php echo strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>
+                    <?php if (!empty($foto_profil_nav)): ?>
+                        <img src="/galeri_foto/uploads/<?php echo htmlspecialchars($foto_profil_nav); ?>?v=<?php echo time(); ?>" alt="Profile" class="nav-avatar-img">
+                    <?php else: ?>
+                        <?php echo strtoupper(substr($username_nav, 0, 1)); ?>
+                    <?php endif; ?>
                 </div>
                 <div class="user-details">
-                    <span class="user-name"><?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?></span>
+                    <span class="user-name"><?php echo htmlspecialchars($username_nav); ?></span>
                     <span class="user-type">Personal</span>
-                    <span class="user-email"><?php echo htmlspecialchars($_SESSION['email'] ?? ''); ?></span>
+                    <span class="user-email"><?php echo htmlspecialchars($email_nav); ?></span>
                 </div>
             </a>
 
