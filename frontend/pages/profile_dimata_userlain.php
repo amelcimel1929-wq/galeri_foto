@@ -36,7 +36,20 @@ $bio_user      = $userData['bio'] ?? '';
 $foto_profil   = $userData['foto_profil'] ?? '';
 $inisial       = strtoupper(substr($nama_user, 0, 1));
 
-$upload_path   = "../../backend/uploads/";
+// -------------------------------------------------------------
+// PENANGANAN PATH UPLOAD & FOTO PROFIL
+// -------------------------------------------------------------
+$sys_upload_dir = __DIR__ . '/../../backend/uploads/'; // Path absolut server untuk file_exists
+$upload_path    = '../../backend/uploads/';            // Path URL relatif untuk HTML img src
+
+// Cek keberadaan foto profil (jika tidak ada di backend/uploads, coba alternatif folder uploads di root)
+if (!empty($foto_profil) && file_exists($sys_upload_dir . $foto_profil)) {
+    $profile_pic_src = $upload_path . htmlspecialchars($foto_profil);
+} elseif (!empty($foto_profil) && file_exists(__DIR__ . '/../../uploads/' . $foto_profil)) {
+    $profile_pic_src = '../../uploads/' . htmlspecialchars($foto_profil);
+} else {
+    $profile_pic_src = null;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -188,8 +201,8 @@ $upload_path   = "../../backend/uploads/";
             <!-- Header Profile Target -->
             <div class="profile-header-container">
                 <div class="profile-avatar">
-                    <?php if (!empty($foto_profil) && file_exists($upload_path . $foto_profil)): ?>
-                        <img src="<?= $upload_path . htmlspecialchars($foto_profil); ?>" alt="Foto Profil">
+                    <?php if ($profile_pic_src): ?>
+                        <img src="<?= $profile_pic_src; ?>" alt="Foto Profil">
                     <?php else: ?>
                         <?= $inisial; ?>
                     <?php endif; ?>
@@ -222,7 +235,7 @@ $upload_path   = "../../backend/uploads/";
             <!-- Pinterest Masonry Grid -->
             <div class="pin-grid">
                 <?php
-                // Query mengambil foto yang diupload user target
+                // Query mengambil semua foto yang diunggah oleh user target
                 $qFoto = "SELECT * FROM foto WHERE id_user = ? ORDER BY tanggal_ungahan DESC";
                 $stmtF = $koneksi->prepare($qFoto);
                 $stmtF->bind_param("i", $user_id_target);
@@ -231,10 +244,15 @@ $upload_path   = "../../backend/uploads/";
 
                 if ($resFoto->num_rows > 0):
                     while ($foto = $resFoto->fetch_assoc()):
+                        // Tentukan path gambar pin/foto
+                        $pin_img_src = $upload_path . htmlspecialchars($foto['lokasi_file']);
+                        if (!file_exists($sys_upload_dir . $foto['lokasi_file']) && file_exists(__DIR__ . '/../../uploads/' . $foto['lokasi_file'])) {
+                            $pin_img_src = '../../uploads/' . htmlspecialchars($foto['lokasi_file']);
+                        }
                 ?>
                     <a href="detail.php?id=<?= $foto['id_foto']; ?>" class="pin-item">
                         <div class="pin-card-masonry">
-                            <img src="<?= $upload_path . htmlspecialchars($foto['lokasi_file']); ?>" alt="<?= htmlspecialchars($foto['judul_foto']); ?>">
+                            <img src="<?= $pin_img_src; ?>" alt="<?= htmlspecialchars($foto['judul_foto']); ?>">
                         </div>
                         <?php if (!empty($foto['judul_foto'])): ?>
                             <div class="pin-title-text"><?= htmlspecialchars($foto['judul_foto']); ?></div>
