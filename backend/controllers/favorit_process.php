@@ -12,7 +12,7 @@ if (!isset($_SESSION['id_user'])) {
 $id_user = $_SESSION['id_user'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-// 1. Ambil daftar album favorit milik user
+// 1. Ambil daftar album favorit
 if ($action === 'get_albums') {
     $stmt = $koneksi->prepare("SELECT id_album_favorit, nama_album FROM album_favorit WHERE id_user = ? ORDER BY id_album_favorit DESC");
     $stmt->bind_param("i", $id_user);
@@ -45,20 +45,19 @@ if ($action === 'toggle') {
     $id_foto = intval($_POST['id_foto'] ?? 0);
     $id_album_favorit = !empty($_POST['id_album_favorit']) ? intval($_POST['id_album_favorit']) : NULL;
 
-    // Cek apakah foto sudah difavoritkan
     $check = $koneksi->prepare("SELECT id_favorit FROM favorit WHERE id_user = ? AND id_foto = ?");
     $check->bind_param("ii", $id_user, $id_foto);
     $check->execute();
     $res = $check->get_result();
 
     if ($res->num_rows > 0) {
-        // Jika sudah ada, hapus dari favorit (Unfavorit)
+        // Hapus dari favorit
         $del = $koneksi->prepare("DELETE FROM favorit WHERE id_user = ? AND id_foto = ?");
         $del->bind_param("ii", $id_user, $id_foto);
         $del->execute();
         echo json_encode(['status' => 'ok', 'is_favorited' => false]);
     } else {
-        // Simpan ke favorit dengan album_favorit (bisa NULL jika tanpa album)
+        // Simpan ke favorit
         if ($id_album_favorit) {
             $ins = $koneksi->prepare("INSERT INTO favorit (id_user, id_foto, id_album_favorit, tanggal_favorit) VALUES (?, ?, ?, NOW())");
             $ins->bind_param("iii", $id_user, $id_foto, $id_album_favorit);
@@ -67,6 +66,24 @@ if ($action === 'toggle') {
             $ins->bind_param("ii", $id_user, $id_foto);
         }
         $ins->execute();
+
+        // --- TAMBAHAN NOTIFIKASI FAVORIT ---
+        $qOwner = $koneksi->prepare("SELECT id_user FROM foto WHERE id_foto = ?");
+        $qOwner->bind_param("i", $id_foto);
+        $qOwner->execute();
+        $resOwner = $qOwner->get_result()->fetch_assoc();
+        $qOwner->close();
+
+        $id_penerima = $resOwner['id_user'] ?? 0;
+
+        if ($id_penerima > 0 && $id_penerima != $id_user) {
+            $pesan = "menambahkan postingan Anda ke favorit.";
+            $notif = $koneksi->prepare("INSERT INTO notifikasi (id_user_penerima, id_user_pemicu, id_foto, pesan, tanggal_notifikasi) VALUES (?, ?, ?, ?, NOW())");
+            $notif->bind_param("iiis", $id_penerima, $id_user, $id_foto, $pesan);
+            $notif->execute();
+            $notif->close();
+        }
+
         echo json_encode(['status' => 'ok', 'is_favorited' => true]);
     }
     exit;

@@ -37,6 +37,25 @@ if ($action === 'toggle') {
         $add->execute();
         $add->close();
         $liked_status = true;
+
+        // --- TAMBAHAN NOTIFIKASI LIKE ---
+        // Cari pemilik foto
+        $qOwner = $koneksi->prepare("SELECT id_user FROM foto WHERE id_foto = ?");
+        $qOwner->bind_param("i", $id_foto);
+        $qOwner->execute();
+        $resOwner = $qOwner->get_result()->fetch_assoc();
+        $qOwner->close();
+
+        $id_penerima = $resOwner['id_user'] ?? 0;
+
+        // Kirim notifikasi jika yang menyukai bukan pemilik foto sendiri
+        if ($id_penerima > 0 && $id_penerima != $id_user) {
+            $pesan = "menyukai postingan Anda.";
+            $notif = $koneksi->prepare("INSERT INTO notifikasi (id_user_penerima, id_user_pemicu, id_foto, pesan, tanggal_notifikasi) VALUES (?, ?, ?, ?, NOW())");
+            $notif->bind_param("iiis", $id_penerima, $id_user, $id_foto, $pesan);
+            $notif->execute();
+            $notif->close();
+        }
     }
 
     // Hitung total like terbaru

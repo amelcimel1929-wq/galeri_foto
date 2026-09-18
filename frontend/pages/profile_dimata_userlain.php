@@ -71,7 +71,7 @@ if (!empty($foto_profil) && file_exists($sys_upload_dir . $foto_profil)) {
             display: flex;
             flex-direction: row;
             align-items: flex-start;
-            justify-content: flex-start;
+            justify-content: space-between; /* Menempatkan ikon kembali di sisi kanan berlawanan */
             gap: 20px;
             margin-top: 16px;
             text-align: left;
@@ -120,6 +120,26 @@ if (!empty($foto_profil) && file_exists($sys_upload_dir . $foto_profil)) {
         .btn-custom-gray { background-color: #e9e9e9; color: #111; font-weight: 600; border-radius: 24px; padding: 6px 16px; border: none; font-size: 14px; }
         .btn-custom-red { background-color: #e60023; color: #fff; font-weight: 600; border-radius: 24px; padding: 6px 16px; border: none; font-size: 14px; }
         
+        /* Style Tombol Kembali */
+        .btn-back-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e9e9e9;
+            color: #111;
+            text-decoration: none;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .btn-back-icon:hover {
+            background-color: #e2e2e2;
+            color: #111;
+            transform: scale(1.05);
+        }
+
         /* Navigation Title */
         .board-tab-title {
             display: flex;
@@ -200,31 +220,39 @@ if (!empty($foto_profil) && file_exists($sys_upload_dir . $foto_profil)) {
         <div class="container-fluid px-4 py-2">
             <!-- Header Profile Target -->
             <div class="profile-header-container">
-                <div class="profile-avatar">
-                    <?php if ($profile_pic_src): ?>
-                        <img src="<?= $profile_pic_src; ?>" alt="Foto Profil">
-                    <?php else: ?>
-                        <?= $inisial; ?>
-                    <?php endif; ?>
-                </div>
-
-                <div class="profile-info">
-                    <div class="profile-title-row">
-                        <h1 class="profile-name"><?= htmlspecialchars($nama_user); ?></h1>
+                <!-- Info Profil (Sisi Kiri) -->
+                <div class="d-flex gap-3 align-items-start">
+                    <div class="profile-avatar">
+                        <?php if ($profile_pic_src): ?>
+                            <img src="<?= $profile_pic_src; ?>" alt="Foto Profil">
+                        <?php else: ?>
+                            <?= $inisial; ?>
+                        <?php endif; ?>
                     </div>
 
-                    <div class="profile-username">@<?= htmlspecialchars($username_user); ?></div>
-                    <?php if(!empty($bio_user)): ?>
-                        <p class="text-muted small mb-0 mt-1"><?= htmlspecialchars($bio_user); ?></p>
-                    <?php endif; ?>
-
-                    <?php if ($id_user_login != $user_id_target): ?>
-                        <div class="profile-action-row">
-                            <button class="btn btn-custom-gray">Pesan</button>
-                            <button class="btn btn-custom-red">Ikuti</button>
+                    <div class="profile-info">
+                        <div class="profile-title-row">
+                            <h1 class="profile-name"><?= htmlspecialchars($nama_user); ?></h1>
                         </div>
-                    <?php endif; ?>
+
+                        <div class="profile-username">@<?= htmlspecialchars($username_user); ?></div>
+                        <?php if(!empty($bio_user)): ?>
+                            <p class="text-muted small mb-0 mt-1"><?= htmlspecialchars($bio_user); ?></p>
+                        <?php endif; ?>
+
+                        <?php if ($id_user_login != $user_id_target): ?>
+                            <div class="profile-action-row">
+                                <button class="btn btn-custom-gray">Pesan</button>
+                                <button class="btn btn-custom-red">Ikuti</button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
+
+                <!-- Tombol Icon Kembali ke Halaman Detail Sebelumnya (Sisi Kanan) -->
+                <a href="javascript:history.back()" class="btn-back-icon" title="Kembali ke Detail">
+                    <i class="fa-solid fa-arrow-left fs-5"></i>
+                </a>
             </div>
 
             <!-- Tab Title -->

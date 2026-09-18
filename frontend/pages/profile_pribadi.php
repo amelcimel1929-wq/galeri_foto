@@ -43,6 +43,16 @@ if (isset($koneksi) || isset($conn)) {
 // Ambil tab aktif dari URL, default ke 'liked'
 $tab = $_GET['tab'] ?? 'liked';
 
+// FIX: Cek foto profil di 2 kemungkinan folder (backend/uploads = lokasi baku, uploads = folder lama)
+$avatar_src2 = null;
+if (!empty($foto_profil)) {
+    if (file_exists(__DIR__ . '/../../backend/uploads/' . $foto_profil)) {
+        $avatar_src2 = '../../backend/uploads/' . htmlspecialchars($foto_profil);
+    } elseif (file_exists(__DIR__ . '/../../uploads/' . $foto_profil)) {
+        $avatar_src2 = '../../uploads/' . htmlspecialchars($foto_profil);
+    }
+}
+
 include '../partials/header.php';
 include '../partials/navbar.php';
 ?>
@@ -376,8 +386,8 @@ body {
         <!-- AVATAR PROFIL -->
         <div class="avatar-wrapper">
             <div class="avatar-circle">
-                <?php if (!empty($foto_profil)): ?>
-                    <img src="../../uploads/<?= htmlspecialchars($foto_profil); ?>?v=<?= time(); ?>" alt="Profile Picture">
+                <?php if ($avatar_src2): ?>
+                    <img src="<?= $avatar_src2; ?>?v=<?= time(); ?>" alt="Profile Picture">
                 <?php else: ?>
                     <?= strtoupper(substr($username, 0, 1)); ?>
                 <?php endif; ?>

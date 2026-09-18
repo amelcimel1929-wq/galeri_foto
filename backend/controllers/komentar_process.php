@@ -2,10 +2,7 @@
 session_start();
 require_once __DIR__ . '/../config/connection.php';
 
-// Pastikan selalu merespons dengan JSON
 header('Content-Type: application/json');
-
-// Matikan penanganan error HTML agar tidak merusak format JSON
 error_reporting(0);
 
 if (!isset($_SESSION['id_user'])) {
@@ -17,7 +14,7 @@ if (!isset($_SESSION['id_user'])) {
 $id_user = $_SESSION['id_user'];
 $action  = $_REQUEST['action'] ?? '';
 
-// ---------- 1. TAMPILKAN DAFTAR KOMENTAR (termasuk balasannya) ----------
+// ---------- 1. TAMPILKAN DAFTAR KOMENTAR ----------
 if ($action === 'list') {
     $id_foto = (int) ($_GET['id_foto'] ?? 0);
 
@@ -60,7 +57,6 @@ if ($action === 'add') {
         exit;
     }
 
-    // Kalau ini balasan, pastikan komentar induknya benar-benar ada & milik foto ini
     if ($parent_id !== null) {
         $cek = $koneksi->prepare("SELECT id_komentar FROM komentar_foto WHERE id_komentar = ? AND id_foto = ?");
         $cek->bind_param("ii", $parent_id, $id_foto);
@@ -90,7 +86,26 @@ if ($action === 'add') {
     }
 
     if ($stmt->execute()) {
-        echo json_encode(['status' => 'ok', 'id_komentar' => $stmt->insert_id]);
+        $inserted_id = $stmt->insert_id;
+
+        // --- TAMBAHAN NOTIFIKASI KOMENTAR ---
+        $qOwner = $koneksi->prepare("SELECT id_user FROM foto WHERE id_foto = ?");
+        $qOwner->bind_param("i", $id_foto);
+        $qOwner->execute();
+        $resOwner = $qOwner->get_result()->fetch_assoc();
+        $qOwner->close();
+
+        $id_penerima = $resOwner['id_user'] ?? 0;
+
+        if ($id_penerima > 0 && $id_penerima != $id_user) {
+            $pesan = "mengomentari postingan Anda.";
+            $notif = $koneksi->prepare("INSERT INTO notifikasi (id_user_penerima, id_user_pemicu, id_foto, pesan, tanggal_notifikasi) VALUES (?, ?, ?, ?, NOW())");
+            $notif->bind_param("iiis", $id_penerima, $id_user, $id_foto, $pesan);
+            $notif->execute();
+            $notif->close();
+        }
+
+        echo json_encode(['status' => 'ok', 'id_komentar' => $inserted_id]);
     } else {
         echo json_encode(['status' => 'error', 'message' => $stmt->error]);
     }

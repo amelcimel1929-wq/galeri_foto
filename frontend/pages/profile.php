@@ -27,6 +27,17 @@ $qUser->close();
 // Ambil tab dari URL, default ke 'boards'
 $tab = $_GET['tab'] ?? 'boards';
 
+// FIX: Cek foto profil di 2 kemungkinan folder (backend/uploads = lokasi baku, uploads = folder lama)
+$avatar_src = null;
+$fp = $_SESSION['foto_profil'] ?? '';
+if (!empty($fp)) {
+    if (file_exists(__DIR__ . '/../../backend/uploads/' . $fp)) {
+        $avatar_src = '../../backend/uploads/' . htmlspecialchars($fp);
+    } elseif (file_exists(__DIR__ . '/../../uploads/' . $fp)) {
+        $avatar_src = '../../uploads/' . htmlspecialchars($fp);
+    }
+}
+
 // Include Partial Navbar & Header
 include '../partials/header.php';
 include '../partials/navbar.php';
@@ -55,8 +66,8 @@ include '../partials/navbar.php';
                 <!-- Wrapper Avatar Profil -->
                 <div class="profile-avatar-wrapper">
                     <a href="profile_pribadi.php" class="avatar-link" title="Lihat Profil">
-                        <?php if (!empty($_SESSION['foto_profil'])): ?>
-                            <img src="../../uploads/<?= htmlspecialchars($_SESSION['foto_profil']); ?>?v=<?= time(); ?>" alt="Profile Picture" class="avatar-img">
+                        <?php if ($avatar_src): ?>
+                            <img src="<?= $avatar_src; ?>?v=<?= time(); ?>" alt="Profile Picture" class="avatar-img">
                         <?php else: ?>
                             <div class="avatar-placeholder">
                                 <?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)); ?>

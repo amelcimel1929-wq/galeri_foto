@@ -32,6 +32,16 @@ if (isset($_SESSION['id_user']) && isset($koneksi)) {
     }
     $qUserNav->close();
 }
+
+// FIX: Cek foto profil di 2 kemungkinan folder (backend/uploads = lokasi baku, uploads = folder lama)
+$avatar_src_nav = null;
+if (!empty($foto_profil_nav)) {
+    if (file_exists(__DIR__ . '/../../backend/uploads/' . $foto_profil_nav)) {
+        $avatar_src_nav = '/galeri_foto/backend/uploads/' . htmlspecialchars($foto_profil_nav);
+    } elseif (file_exists(__DIR__ . '/../../uploads/' . $foto_profil_nav)) {
+        $avatar_src_nav = '/galeri_foto/uploads/' . htmlspecialchars($foto_profil_nav);
+    }
+}
 ?>
 
 <input type="hidden" id="userId" value="<?php echo $_SESSION['id_user'] ?? ''; ?>">
@@ -85,13 +95,14 @@ body {
     border-radius: 50%;
     text-decoration: none;
     transition: background 0.2s;
+    cursor: pointer;
 }
 
 .sidebar-menu a:hover, .sidebar-bottom a:hover {
     background-color: #f0f0f0;
 }
 
-/* TOP NAVBAR (Tinggi 56px ringkas) */
+/* TOP NAVBAR (Dengan Efek Pergeseran / Shift) */
 .top-navbar {
     position: fixed;
     top: 0;
@@ -105,6 +116,11 @@ body {
     padding: 6px 24px;
     gap: 16px;
     z-index: 999;
+    transition: left 0.3s ease; /* Transisi Halus */
+}
+
+.top-navbar.shifted {
+    left: 432px; /* 72px + 360px (lebar panel) */
 }
 
 .search-box {
@@ -113,7 +129,7 @@ body {
     padding: 8px 16px;
     display: flex;
     align-items: center;
-    flex: 1; /* Supaya memanjang mengisi sisa layar */
+    flex: 1;
     max-width: 100%;
 }
 
@@ -161,7 +177,6 @@ body {
     overflow: hidden;
 }
 
-/* Custom CSS khusus agar gambar profil pas rapi */
 .nav-avatar-img {
     width: 100%;
     height: 100%;
@@ -276,13 +291,18 @@ body {
     color: #e60023;
 }
 
-/* LAYOUT KONTEN UTAMA (MEPET PRESISI KE NAVBAR) */
+/* LAYOUT KONTEN UTAMA (Dengan Efek Pergeseran / Shift) */
 .main-content {
     margin-left: 72px;
-    margin-top: 56px;   /* Sejajar tepat dengan tinggi Top Navbar */
-    padding-top: 10px;  /* Margin tipis agar mepet ke search bar */
+    margin-top: 56px;
+    padding-top: 10px;
     padding-left: 24px;
     padding-right: 24px;
+    transition: margin-left 0.3s ease; /* Transisi Halus */
+}
+
+.main-content.shifted {
+    margin-left: 432px; /* 72px + 360px (lebar panel) */
 }
 
 .main-content > *:first-child {
@@ -290,33 +310,125 @@ body {
     padding-top: 0 !important;
 }
 
-/* POPUP CREATE PANEL */
-.create-panel {
+/* PANEL CREATION & PANEL NOTIFIKASI */
+.create-panel, .notification-panel {
     position: fixed;
     left: 72px;
     top: 0;
-    width: 320px;
+    width: 360px;
     height: 100vh;
     background-color: #ffffff;
     border-right: 1px solid #e0e0e0;
     padding: 24px 16px;
     display: none;
     flex-direction: column;
-    z-index: 9999;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.08);
+    z-index: 998; /* Lebih rendah dari sidebar */
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
 }
 
-.create-panel.open { display: flex !important; }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.panel-title { font-size: 20px; font-weight: 700; color: #111; }
-.close-btn { border: none; background: transparent; font-size: 18px; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.close-btn:hover { background-color: #e9e9e9; }
+.create-panel.open, .notification-panel.open { 
+    display: flex !important; 
+}
+
+.panel-header, .notif-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 16px; 
+}
+
+.panel-title, .notif-title { 
+    font-size: 20px; 
+    font-weight: 700; 
+    color: #111; 
+}
+
+.close-btn { 
+    border: none; 
+    background: transparent; 
+    font-size: 18px; 
+    cursor: pointer; 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.close-btn:hover { 
+    background-color: #e9e9e9; 
+}
+
 .option-list { display: flex; flex-direction: column; gap: 12px; }
 .option-item { display: flex; align-items: flex-start; padding: 12px; border-radius: 16px; background-color: #efefef; cursor: pointer; text-decoration: none; color: inherit; transition: background-color 0.2s; }
 .option-item:hover { background-color: #e2e2e2; }
 .option-icon { width: 40px; height: 40px; font-size: 18px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0; }
 .option-text h4 { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 2px; }
 .option-text p { font-size: 12px; color: #5f5f5f; line-height: 1.3; }
+
+/* NOTIFIKASI CSS */
+.notif-section-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #111;
+}
+
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notif-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #111;
+    gap: 12px;
+    transition: background 0.2s;
+}
+
+.notif-item:hover {
+    background-color: #f0f0f0;
+}
+
+.notif-img-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background-color: #e0e0e0;
+}
+
+.notif-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.notif-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.notif-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.notif-time {
+    font-size: 12px;
+    color: #767676;
+    margin-top: 2px;
+}
 </style>
 
 <!-- Sidebar Kiri -->
@@ -326,7 +438,7 @@ body {
         <a href="#" title="Jelajahi"><i class="fa-regular fa-compass"></i></a>
         <a href="/galeri_foto/frontend/pages/profile.php" title="Kategori"><i class="fa-solid fa-table-cells"></i></a>
         <a href="javascript:void(0)" id="btnTambah" title="Buat"><i class="fa-regular fa-square-plus"></i></a>
-        <a href="#" title="Notifikasi"><i class="fa-regular fa-bell"></i></a>
+        <a href="javascript:void(0)" id="btnNotifikasi" title="Notifikasi"><i class="fa-regular fa-bell"></i></a>
         <a href="#" title="Pesan"><i class="fa-regular fa-comment-dots"></i></a>
     </nav>
     <div class="sidebar-bottom">
@@ -335,7 +447,7 @@ body {
 </aside>
 
 <!-- Top Navbar -->
-<header class="top-navbar">
+<header class="top-navbar" id="topNavbar">
     <div class="search-box">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
         <input type="text" placeholder="Search your Pins">
@@ -343,10 +455,9 @@ body {
     </div>
     
     <div class="top-nav-right">
-        <!-- Icon Profil Kecil Navbar (Otomatis ganti jika ada foto) -->
         <a href="/galeri_foto/frontend/pages/profile.php" class="profile-avatar-small" title="Profil Saya">
-            <?php if (!empty($foto_profil_nav)): ?>
-                <img src="/galeri_foto/uploads/<?php echo htmlspecialchars($foto_profil_nav); ?>?v=<?php echo time(); ?>" alt="Profile" class="nav-avatar-img">
+            <?php if ($avatar_src_nav): ?>
+                <img src="<?php echo $avatar_src_nav; ?>?v=<?php echo time(); ?>" alt="Profile" class="nav-avatar-img">
             <?php else: ?>
                 <?php echo strtoupper(substr($username_nav, 0, 1)); ?>
             <?php endif; ?>
@@ -360,10 +471,9 @@ body {
             <div class="dropdown-header-label">Currently in</div>
             
             <a href="/galeri_foto/frontend/pages/profile.php" class="user-profile-info">
-                <!-- Icon Profil Besar Dropdown (Otomatis ganti jika ada foto) -->
                 <div class="profile-avatar-small avatar-large">
-                    <?php if (!empty($foto_profil_nav)): ?>
-                        <img src="/galeri_foto/uploads/<?php echo htmlspecialchars($foto_profil_nav); ?>?v=<?php echo time(); ?>" alt="Profile" class="nav-avatar-img">
+                    <?php if ($avatar_src_nav): ?>
+                        <img src="<?php echo $avatar_src_nav; ?>?v=<?php echo time(); ?>" alt="Profile" class="nav-avatar-img">
                     <?php else: ?>
                         <?php echo strtoupper(substr($username_nav, 0, 1)); ?>
                     <?php endif; ?>
@@ -414,32 +524,92 @@ body {
     </div>
 </div>
 
+<!-- INCLUDE PANEL NOTIFIKASI DARI PAGES -->
+<?php include_once __DIR__ . '/../pages/notifikasi.php'; ?>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handling Create Panel (+ Button)
     const btnTambah = document.getElementById('btnTambah');
     const closeBtn = document.getElementById('closeBtn');
     const createPanel = document.getElementById('createPanel');
 
+    const btnNotifikasi = document.getElementById('btnNotifikasi');
+    const notificationPanel = document.getElementById('notificationPanel');
+    const closeNotifBtn = document.getElementById('closeNotifBtn');
+
+    const topNavbar = document.getElementById('topNavbar');
+    const mainContent = document.querySelector('.main-content');
+
+    // Fungsi Penggeser Konten Utama & Top Navbar
+    function toggleContentShift(shift) {
+        if (shift) {
+            if (topNavbar) topNavbar.classList.add('shifted');
+            if (mainContent) mainContent.classList.add('shifted');
+        } else {
+            if (topNavbar) topNavbar.classList.remove('shifted');
+            if (mainContent) mainContent.classList.remove('shifted');
+        }
+    }
+
+    // Toggle Panel Tambah (+)
     if (btnTambah && createPanel) {
         btnTambah.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            createPanel.classList.toggle('open');
+            if (notificationPanel) notificationPanel.classList.remove('open');
+            
+            const isOpen = createPanel.classList.toggle('open');
+            toggleContentShift(isOpen);
         });
 
-        closeBtn.addEventListener('click', function() {
-            createPanel.classList.remove('open');
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!createPanel.contains(e.target) && !btnTambah.contains(e.target)) {
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
                 createPanel.classList.remove('open');
-            }
-        });
+                toggleContentShift(false);
+            });
+        }
     }
 
-    // Handling User Profile Dropdown
+    // Toggle Panel Notifikasi (Lonceng)
+    if (btnNotifikasi && notificationPanel) {
+        btnNotifikasi.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (createPanel) createPanel.classList.remove('open');
+
+            const isOpen = notificationPanel.classList.toggle('open');
+            toggleContentShift(isOpen);
+        });
+
+        if (closeNotifBtn) {
+            closeNotifBtn.addEventListener('click', function() {
+                notificationPanel.classList.remove('open');
+                toggleContentShift(false);
+            });
+        }
+    }
+
+    // Menutup panel saat klik di luar area
+    document.addEventListener('click', function(e) {
+        let closedAny = false;
+        if (createPanel && !createPanel.contains(e.target) && !btnTambah.contains(e.target)) {
+            if (createPanel.classList.contains('open')) {
+                createPanel.classList.remove('open');
+                closedAny = true;
+            }
+        }
+        if (notificationPanel && !notificationPanel.contains(e.target) && !btnNotifikasi.contains(e.target)) {
+            if (notificationPanel.classList.contains('open')) {
+                notificationPanel.classList.remove('open');
+                closedAny = true;
+            }
+        }
+        if (closedAny) {
+            toggleContentShift(false);
+        }
+    });
+
+    // Dropdown User Profile
     const btnUserMenu = document.getElementById('btnUserMenu');
     const userDropdown = document.getElementById('userDropdown');
 
