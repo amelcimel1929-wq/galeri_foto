@@ -7,9 +7,10 @@ if (session_status() === PHP_SESSION_NONE) {
 // Koneksi ke Database
 require_once __DIR__ . '/../../backend/config/connection.php';
 
-// Ambil ID User dan Tab Aktif
+// Ambil ID User, Tab Aktif, dan Filter Privacy
 $id_user = $_SESSION['id_user'] ?? $_GET['id_user'] ?? 0;
 $tab     = $_GET['tab'] ?? 'boards';
+$privacy = $_GET['privacy'] ?? 'all';
 
 // Base Path folder upload gambar
 $upload_path = "../../backend/uploads/"; 
@@ -51,6 +52,20 @@ $upload_path = "../../backend/uploads/";
         display: block;
         border-radius: 16px;
         object-fit: cover;
+    }
+
+    /* Badge penanda Private jika foto diset Private */
+    .private-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        backdrop-filter: blur(4px);
     }
 
     /* ================= 2. BOARDS & COLLAGES GRID ================= */
@@ -125,7 +140,6 @@ $upload_path = "../../backend/uploads/";
             if ($res->num_rows > 0):
                 while ($row = $res->fetch_assoc()):
             ?>
-                    <!-- Buka halaman detail.php saat diklik -->
                     <div class="grid-item">
                         <a href="detail.php?id=<?= $row['id_foto']; ?>">
                             <img src="<?= $upload_path . htmlspecialchars($row['lokasi_file']); ?>" 
@@ -204,8 +218,9 @@ $upload_path = "../../backend/uploads/";
         ?>
 
     <?php elseif ($tab === 'boards'): ?>
-        <!-- ================= TAB BOARDS (GRID COVER 2x2) ================= -->
+        <!-- ================= TAB BOARDS / FOTO (BERDASARKAN FILTER PRIVASI) ================= -->
         <?php
+        // 1. Ambil album milik user
         $qAlbum = "SELECT a.*, 
                     (SELECT COUNT(*) FROM save_foto sf WHERE sf.id_album = a.id_album) as total_foto
                    FROM album a 
@@ -217,7 +232,8 @@ $upload_path = "../../backend/uploads/";
         $stmtA->execute();
         $resAlbum = $stmtA->get_result();
 
-        if ($resAlbum->num_rows > 0):
+        // Jika user punya album, tampilkan daftar albumnya
+        if ($resAlbum->num_rows > 0 && $privacy === 'all'):
         ?>
             <div class="boards-grid">
                 <?php while ($album = $resAlbum->fetch_assoc()): 
@@ -260,8 +276,15 @@ $upload_path = "../../backend/uploads/";
             </div>
         <?php 
         else:
-            // FALLBACK FOTO UNGGAHAN USER
-            $qFotoUser = "SELECT * FROM foto WHERE id_user = ? ORDER BY id_foto DESC";
+            // 2. Tampilkan Foto Unggahan berdasarkan Sub-tab Privasi (Semua, Public, atau Private)
+            if ($privacy === 'public') {
+                $qFotoUser = "SELECT * FROM foto WHERE id_user = ? AND visibilitas = 'public' ORDER BY id_foto DESC";
+            } elseif ($privacy === 'private') {
+                $qFotoUser = "SELECT * FROM foto WHERE id_user = ? AND visibilitas = 'private' ORDER BY id_foto DESC";
+            } else { // privacy === 'all'
+                $qFotoUser = "SELECT * FROM foto WHERE id_user = ? ORDER BY id_foto DESC";
+            }
+
             $stmtFU = $koneksi->prepare($qFotoUser);
             $stmtFU->bind_param("i", $id_user);
             $stmtFU->execute();
@@ -271,17 +294,25 @@ $upload_path = "../../backend/uploads/";
             ?>
                 <div class="grid-photos">
                     <?php while ($fu = $resFU->fetch_assoc()): ?>
-                        <!-- Buka halaman detail.php saat diklik -->
                         <div class="grid-item">
                             <a href="detail.php?id=<?= $fu['id_foto']; ?>">
                                 <img src="<?= $upload_path . htmlspecialchars($fu['lokasi_file']); ?>" alt="Foto User">
+                                <?php if ($fu['visibilitas'] === 'private'): ?>
+                                    <span class="private-badge"><i class="fa-solid fa-lock"></i> Private</span>
+                                <?php endif; ?>
                             </a>
                         </div>
                     <?php endwhile; ?>
                 </div>
             <?php
             else:
-                echo "<p class='empty-state-text'>Kamu belum punya board atau foto.</p>";
+                if ($privacy === 'private') {
+                    echo "<p class='empty-state-text'>Belum ada foto yang diarsipkan/diprivat.</p>";
+                } elseif ($privacy === 'public') {
+                    echo "<p class='empty-state-text'>Belum ada foto publik.</p>";
+                } else {
+                    echo "<p class='empty-state-text'>Kamu belum punya board atau foto.</p>";
+                }
             endif;
             $stmtFU->close();
         endif;

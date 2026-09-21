@@ -3,6 +3,13 @@ session_start();
 require_once __DIR__ . '/../config/connection.php';
 
 if (!isset($_SESSION['id_user'])) {
+    // Jika request via AJAX, kembalikan respon JSON
+    if (isset($_POST['action']) && in_array($_POST['action'], ['update_visibilitas', 'delete'])) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Sesi tidak valid / belum login.']);
+        exit;
+    }
+    
     header('Location: ../../frontend/pages/login.php');
     exit;
 }
@@ -10,6 +17,7 @@ if (!isset($_SESSION['id_user'])) {
 $id_user = $_SESSION['id_user'];
 $action  = $_POST['action'] ?? $_GET['action'] ?? '';
 
+// --- AKSI 1: UPLOAD FOTO (ASLI & KODE UTAMA KAMU) ---
 if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $judul_foto      = trim($_POST['judul_foto'] ?? '');
@@ -76,5 +84,64 @@ if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     header('Location: ../../frontend/pages/tambah_foto.php?error=' . urlencode('Gagal mengunggah gambar'));
+    exit;
+}
+
+// --- AKSI 2: UPDATE VISIBILITAS (PRIVATE / PUBLIC) ---
+if ($action === 'update_visibilitas' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+
+    $id_foto = isset($_POST['id_foto']) ? intval($_POST['id_foto']) : 0;
+    $visibilitas = $_POST['visibilitas'] ?? 'public';
+
+    if (!in_array($visibilitas, ['public', 'private'])) {
+        echo json_encode(['status' => 'error', 'message' => 'Status visibilitas tidak valid.']);
+        exit;
+    }
+
+    // Update kolom visibilitas di tabel foto
+    $query = "UPDATE foto SET visibilitas = ? WHERE id_foto = ? AND id_user = ?";
+    $stmt = $koneksi->prepare($query);
+    $stmt->bind_param("sii", $visibilitas, $id_foto, $id_user);
+
+    if ($stmt->execute()) {
+        echo json_encode(['status' => 'ok', 'visibilitas' => $visibilitas]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Gagal mengupdate visibilitas foto.']);
+    }
+    $stmt->close();
+    exit;
+}
+
+// --- AKSI 3: HAPUS MEDIA ---
+if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+
+    $id_foto = isset($_POST['id_foto']) ? intval($_POST['id_foto']) : 0;
+
+    // Ambil info berkas terlebih dahulu
+    $stmtSelect = $koneksi->prepare("SELECT lokasi_file FROM foto WHERE id_foto = ? AND id_user = ?");
+    $stmtSelect->bind_param("ii", $id_foto, $id_user);
+    $stmtSelect->execute();
+    $res = $stmtSelect->get_result()->fetch_assoc();
+    $stmtSelect->close();
+
+    if ($res) {
+        // Hapus file dari folder uploads jika ada
+        $filePath = __DIR__ . '/../uploads/' . $res['lokasi_file'];
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        // Hapus record dari database
+        $stmtDelete = $koneksi->prepare("DELETE FROM foto WHERE id_foto = ? AND id_user = ?");
+        $stmtDelete->bind_param("ii", $id_foto, $id_user);
+        $stmtDelete->execute();
+        $stmtDelete->close();
+
+        echo json_encode(['status' => 'ok']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Foto tidak ditemukan atau Anda tidak memiliki hak akses.']);
+    }
     exit;
 }

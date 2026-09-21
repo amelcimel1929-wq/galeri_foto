@@ -11,13 +11,13 @@ include '../partials/header.php';
 include '../partials/navbar.php';
 
 $id_foto = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$id_user_login =$_SESSION['id_user'];
+$id_user_login = $_SESSION['id_user'];
 
 // --- PENENTUAN URL KEMBALI DINAMIS ---
 $back_url = '../../index.php'; // Default jika diakses langsung
 
 if (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
-    $back_url =$_SERVER['HTTP_REFERER'];
+    $back_url = $_SERVER['HTTP_REFERER'];
 }
 
 // --- AMBIL DETAIL FOTO & UPLOADER ---
@@ -25,8 +25,10 @@ $query = "SELECT foto.*, user.username, user.nama_lengkap
           FROM foto 
           JOIN user ON foto.id_user = user.id_user 
           WHERE foto.id_foto = ?";
-$stmt =$koneksi->prepare($query);$stmt->bind_param("i", $id_foto);$stmt->execute();
-$foto =$stmt->get_result()->fetch_assoc();
+$stmt = $koneksi->prepare($query);
+$stmt->bind_param("i", $id_foto);
+$stmt->execute();
+$foto = $stmt->get_result()->fetch_assoc();
 
 if (!$foto) {
     echo "<p style='margin-top:100px; text-align:center;'>Foto tidak ditemukan.</p>";
@@ -34,7 +36,9 @@ if (!$foto) {
 }
 
 $file_path = "../../backend/uploads/" . htmlspecialchars($foto['lokasi_file']);
-$uploader_id =$foto['id_user'];
+$uploader_id = $foto['id_user'];
+$is_owner = ($uploader_id == $id_user_login);
+$visibilitas = $foto['visibilitas'] ?? 'public';
 ?>
 
 <style>
@@ -138,6 +142,12 @@ $uploader_id =$foto['id_user'];
         align-items: center;
         gap: 6px;
     }
+    .action-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+    }
     .icon-btn {
         border: none;
         background: transparent;
@@ -166,6 +176,45 @@ $uploader_id =$foto['id_user'];
         font-size: 13px;
         text-decoration: none;
         display: inline-block;
+    }
+
+    /* DROPDOWN MENU OPSI (TITIK TIGA) */
+    .more-options-menu {
+        display: none;
+        position: absolute;
+        top: 40px;
+        right: 0;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        min-width: 160px;
+        z-index: 100;
+        overflow: hidden;
+        padding: 6px 0;
+    }
+    .more-options-menu.active {
+        display: block;
+    }
+    .more-options-menu button {
+        width: 100%;
+        text-align: left;
+        padding: 10px 16px;
+        background: none;
+        border: none;
+        font-size: 13px;
+        font-weight: 600;
+        color: #111;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.2s;
+    }
+    .more-options-menu button:hover {
+        background-color: #f0f0f0;
+    }
+    .more-options-menu button.danger-text {
+        color: #e60023;
     }
 
     .uploader-box {
@@ -398,10 +447,41 @@ $uploader_id =$foto['id_user'];
                             </button>
                         </div>
 
-                        <a href="<?php echo $file_path; ?>" download class="btn-save-red">Save</a>
+                        <div class="action-right">
+                            <a href="<?php echo $file_path; ?>" download class="btn-save-red">Save</a>
+
+                            <?php if ($is_owner): ?>
+                                <!-- TOMBOL TITIK TIGA KHUSUS PEMILIK FOTO -->
+                                <button type="button" id="btnMoreOptions" class="icon-btn" title="Opsi Lainnya">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                        <circle cx="12" cy="5" r="2"/>
+                                        <circle cx="12" cy="12" r="2"/>
+                                        <circle cx="12" cy="19" r="2"/>
+                                    </svg>
+                                </button>
+
+                                <div class="more-options-menu" id="moreOptionsMenu">
+                                    <button type="button" id="btnToggleArchive">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="9" y1="9" x2="15" y2="9"></line>
+                                        </svg>
+                                        <span id="labelArchive"><?php echo ($visibilitas === 'private') ? 'Jadikan Public' : 'Arsipkan (Private)'; ?></span>
+                                    </button>
+
+                                    <button type="button" id="btnDeleteMedia" class="danger-text">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                        Hapus Media
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
-                    <!-- UPLOADER BOX (SUDAH DIHUBUNGKAN KE PROFILE) -->
+                    <!-- UPLOADER BOX -->
                     <a href="profile_dimata_userlain.php?user_id=<?php echo $foto['id_user']; ?>" class="uploader-box">
                         <div class="avatar-circle"><?php echo strtoupper(substr($foto['username'], 0, 1)); ?></div>
                         <div>
@@ -431,11 +511,12 @@ $uploader_id =$foto['id_user'];
             <?php
             $rec_side = "SELECT * FROM foto WHERE id_user = ? AND id_foto != ? ORDER BY id_foto DESC LIMIT 2";
             $stmt_side = $koneksi->prepare($rec_side);
-            $stmt_side->bind_param("ii", $uploader_id, $id_foto);$stmt_side->execute();
-            $res_side =$stmt_side->get_result();
+            $stmt_side->bind_param("ii", $uploader_id, $id_foto);
+            $stmt_side->execute();
+            $res_side = $stmt_side->get_result();
 
             if ($res_side->num_rows > 0):
-                while ($rec =$res_side->fetch_assoc()):
+                while ($rec = $res_side->fetch_assoc()):
                     $rec_path = "../../backend/uploads/" . htmlspecialchars($rec['lokasi_file']);
             ?>
                     <div class="recommend-item">
@@ -480,6 +561,7 @@ $uploader_id =$foto['id_user'];
 <script>
 const ID_FOTO = <?php echo $id_foto; ?>;
 const ID_USER_LOGIN = <?php echo (int) $id_user_login; ?>;
+let VISIBILITAS_SAAT_INI = "<?php echo $visibilitas; ?>";
 
 function openLightbox(imageSrc) {
     const modal = document.getElementById('lightboxModal');
@@ -513,7 +595,82 @@ document.addEventListener('DOMContentLoaded', function () {
     const commentsList = document.getElementById('commentsList');
     const scrollContainer = document.getElementById('scrollContainer');
 
+    // Element Titik Tiga / Menu Opsi Pemilik
+    const btnMoreOptions = document.getElementById('btnMoreOptions');
+    const moreOptionsMenu = document.getElementById('moreOptionsMenu');
+    const btnToggleArchive = document.getElementById('btnToggleArchive');
+    const labelArchive = document.getElementById('labelArchive');
+    const btnDeleteMedia = document.getElementById('btnDeleteMedia');
+
     let isAlreadyFavorited = false;
+
+    // --- LOGIKA TITIK TIGA & OPTION MENU ---
+    if (btnMoreOptions && moreOptionsMenu) {
+        btnMoreOptions.addEventListener('click', function (e) {
+            e.stopPropagation();
+            moreOptionsMenu.classList.toggle('active');
+        });
+
+        document.addEventListener('click', function () {
+            moreOptionsMenu.classList.remove('active');
+        });
+
+        // Toggle Arsip / Visibilitas
+        if (btnToggleArchive) {
+            btnToggleArchive.addEventListener('click', function () {
+                const targetVisibilitas = (VISIBILITAS_SAAT_INI === 'public') ? 'private' : 'public';
+                const formData = new FormData();
+                formData.append('action', 'update_visibilitas');
+                formData.append('id_foto', ID_FOTO);
+                formData.append('visibilitas', targetVisibilitas);
+
+                fetch('../../backend/controllers/foto_process.php', { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            VISIBILITAS_SAAT_INI = targetVisibilitas;
+                            if (labelArchive) {
+                                labelArchive.textContent = (targetVisibilitas === 'private') ? 'Jadikan Public' : 'Arsipkan (Private)';
+                            }
+                            moreOptionsMenu.classList.remove('active');
+                            alert('Visibilitas foto berhasil diperbarui!');
+                        } else {
+                            alert(data.message || 'Gagal mengubah visibilitas foto.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error visibilitas:', err);
+                        alert('Terjadi kesalahan jaringan.');
+                    });
+            });
+        }
+
+        // Hapus Media
+        if (btnDeleteMedia) {
+            btnDeleteMedia.addEventListener('click', function () {
+                if (confirm('Apakah Anda yakin ingin menghapus media ini secara permanen?')) {
+                    const formData = new FormData();
+                    formData.append('action', 'delete');
+                    formData.append('id_foto', ID_FOTO);
+
+                    fetch('../../backend/controllers/foto_process.php', { method: 'POST', body: formData })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.status === 'ok') {
+                                alert('Foto berhasil dihapus.');
+                                window.location.href = 'profile.php';
+                            } else {
+                                alert(data.message || 'Gagal menghapus foto.');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error delete:', err);
+                            alert('Terjadi kesalahan sistem saat menghapus media.');
+                        });
+                }
+            });
+        }
+    }
 
     // --- LOGIKA FAVORIT ---
     function checkFavoriteStatus() {
