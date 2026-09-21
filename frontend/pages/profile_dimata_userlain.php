@@ -37,6 +37,19 @@ $foto_profil   = $userData['foto_profil'] ?? '';
 $inisial       = strtoupper(substr($nama_user, 0, 1));
 
 // -------------------------------------------------------------
+// CEK STATUS FOLLOW (Apakah User Login Sudah Follow User Target?)
+// -------------------------------------------------------------
+$is_following = false;
+if ($id_user_login > 0 && $user_id_target > 0) {
+    $qCheckFollow = "SELECT 1 FROM follow WHERE id_follower = ? AND id_following = ?";
+    $stmtCheck = $koneksi->prepare($qCheckFollow);
+    $stmtCheck->bind_param("ii", $id_user_login, $user_id_target);
+    $stmtCheck->execute();
+    $is_following = $stmtCheck->get_result()->num_rows > 0;
+    $stmtCheck->close();
+}
+
+// -------------------------------------------------------------
 // PENANGANAN PATH UPLOAD & FOTO PROFIL
 // -------------------------------------------------------------
 $sys_upload_dir = __DIR__ . '/../../backend/uploads/'; // Path absolut server untuk file_exists
@@ -243,7 +256,16 @@ if (!empty($foto_profil) && file_exists($sys_upload_dir . $foto_profil)) {
                         <?php if ($id_user_login != $user_id_target): ?>
                             <div class="profile-action-row">
                                 <button class="btn btn-custom-gray">Pesan</button>
-                                <button class="btn btn-custom-red">Ikuti</button>
+                                
+                                <!-- FORM DENGAN TOMBOL FOLLOW / UNFOLLOW -->
+                                <form action="/galeri_foto/backend/controllers/follow_process.php" method="POST" style="display:inline;">
+                                    <input type="hidden" name="id_following" value="<?= $user_id_target; ?>">
+                                    <?php if ($is_following): ?>
+                                        <button type="submit" class="btn btn-custom-gray">Mengikuti</button>
+                                    <?php else: ?>
+                                        <button type="submit" class="btn btn-custom-red">Ikuti</button>
+                                    <?php endif; ?>
+                                </form>
                             </div>
                         <?php endif; ?>
                     </div>

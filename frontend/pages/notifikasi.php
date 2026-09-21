@@ -3,21 +3,20 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Koneksi ke database
 if (!isset($koneksi)) {
     include_once __DIR__ . '/../../backend/config/connection.php';
 }
 
 $id_user_login = $_SESSION['id_user'] ?? 0;
 
-// Query mengambil data notifikasi beserta info user pemicu & foto
+// Menggunakan LEFT JOIN agar notifikasi tipe 'follow' (yang id_foto-nya NULL) tetap terbaca
 $query = "SELECT n.*, 
                  u.username AS nama_pemicu, 
                  u.foto_profil AS foto_pemicu, 
                  f.lokasi_file AS foto_post
           FROM notifikasi n
           JOIN user u ON n.id_user_pemicu = u.id_user
-          JOIN foto f ON n.id_foto = f.id_foto
+          LEFT JOIN foto f ON n.id_foto = f.id_foto
           WHERE n.id_user_penerima = ?
           ORDER BY n.tanggal_notifikasi DESC";
 
@@ -26,7 +25,6 @@ $stmt->bind_param("i", $id_user_login);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Format waktu relatif
 function formatWaktuAwal($datetime) {
     $time = strtotime($datetime);
     $diff = time() - $time;
@@ -37,8 +35,6 @@ function formatWaktuAwal($datetime) {
     return floor($diff / 2592000) . ' mo';
 }
 
-// FIX: Cari file foto di 2 kemungkinan folder (backend/uploads = lokasi baku, uploads = folder lama)
-// Return null kalau file gak ketemu di manapun (biar gampang kasih fallback tanpa hang ke internet)
 function cariFotoUrl($namaFile) {
     if (empty($namaFile)) return null;
     if (file_exists(__DIR__ . '/../../backend/uploads/' . $namaFile)) {
@@ -50,7 +46,6 @@ function cariFotoUrl($namaFile) {
 }
 ?>
 
-<!-- Wadah Panel Notifikasi (Menggunakan class notification-panel agar sinkron dengan navbar.php) -->
 <div class="notification-panel" id="notificationPanel">
     <div class="notif-header">
         <h3 class="notif-title">Notifications</h3>
@@ -65,12 +60,15 @@ function cariFotoUrl($namaFile) {
         <?php if ($result && $result->num_rows > 0): ?>
             <?php while ($row = $result->fetch_assoc()): ?>
                 <?php 
-                    // FIX: cari URL foto profil pemicu, null kalau tidak ketemu di kedua folder
                     $url_foto_profil = cariFotoUrl($row['foto_pemicu']);
                     $url_foto_post   = cariFotoUrl($row['foto_post']);
+                    
+                    // Link tujuan: Jika follow ke profil pemicu, jika selain follow ke detail foto
+                    $link_destination = ($row['tipe'] === 'follow') 
+                        ? "/galeri_foto/frontend/pages/profile_dimata_userlain.php?user_id=" . $row['id_user_pemicu']
+                        : "/galeri_foto/frontend/pages/detail.php?id=" . $row['id_foto'];
                 ?>
-                <a href="/galeri_foto/frontend/pages/detail.php?id=<?php echo $row['id_foto']; ?>" class="notif-item">
-                    <!-- Foto Profil Pengirim / Pemicu Notif -->
+                <a href="<?php echo $link_destination; ?>" class="notif-item">
                     <div class="notif-img-box">
                         <?php if ($url_foto_profil): ?>
                             <img src="<?php echo $url_foto_profil; ?>" alt="Profile" class="notif-img">
@@ -81,7 +79,6 @@ function cariFotoUrl($namaFile) {
                         <?php endif; ?>
                     </div>
                     
-                    <!-- Isi Pesan Notifikasi -->
                     <div class="notif-content">
                         <p class="notif-text">
                             <strong><?php echo htmlspecialchars($row['nama_pemicu']); ?></strong> 
@@ -90,7 +87,8 @@ function cariFotoUrl($namaFile) {
                         <span class="notif-time"><?php echo formatWaktuAwal($row['tanggal_notifikasi']); ?></span>
                     </div>
 
-                    <!-- Thumbnail Posting Foto -->
+                    <!-- Tampilkan thumbnail postingan jika ada (bukan tipe follow) -->
+                    <?php if ($row['tipe'] !== 'follow'): ?>
                     <div class="notif-img-box">
                         <?php if ($url_foto_post): ?>
                             <img src="<?php echo $url_foto_post; ?>" alt="Post" class="notif-img">
@@ -98,10 +96,10 @@ function cariFotoUrl($namaFile) {
                             <div class="notif-img" style="background:#e0e0e0;"></div>
                         <?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </a>
             <?php endwhile; ?>
         <?php else: ?>
-            <!-- Tampilan jika belum ada notifikasi di database -->
             <div class="notif-item" style="justify-content: center; padding: 20px 0; color: #767676;">
                 <span>Belum ada notifikasi.</span>
             </div>
