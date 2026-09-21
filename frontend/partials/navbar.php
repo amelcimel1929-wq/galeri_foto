@@ -8,6 +8,9 @@ if (!isset($koneksi)) {
     include_once __DIR__ . '/../../backend/config/connection.php';
 }
 
+// Deteksi halaman aktif untuk indikator navbar
+$current_page = basename($_SERVER['PHP_SELF']);
+
 // Variabel default
 $foto_profil_nav = '';
 $username_nav = $_SESSION['username'] ?? 'User';
@@ -74,32 +77,57 @@ body {
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 0;
+    padding: 8px 0 24px 0; /* Padding atas disesuaikan agar sejajar navbar */
     z-index: 1000;
 }
 
 .sidebar-menu {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 24px;
+    align-items: center;
 }
 
+.sidebar-bottom {
+    margin-top: auto;
+}
+
+/* Penyesuaian Ukuran Ikon Sidebar */
 .sidebar-menu a, .sidebar-bottom a {
     color: #111;
-    font-size: 20px;
-    width: 48px;
-    height: 48px;
+    font-size: 24px;
+    width: 52px;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     text-decoration: none;
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s;
     cursor: pointer;
+}
+
+/* CSS Khusus Logo Atas - Sejajar dengan Search Bar */
+.sidebar-menu a.sidebar-logo {
+    padding: 4px;
+    margin-top: 2px; /* Menyesuaikan posisi tepat presisi sejajar search bar */
+}
+
+.sidebar-menu a.sidebar-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 .sidebar-menu a:hover, .sidebar-bottom a:hover {
     background-color: #f0f0f0;
+}
+
+/* Efek Menu Aktif / Indikator Halaman Saat Ini */
+.sidebar-menu a.active, .sidebar-bottom a.active {
+    background-color: #111111 !important;
+    color: #ffffff !important;
 }
 
 /* TOP NAVBAR (Dengan Efek Pergeseran / Shift) */
@@ -116,11 +144,11 @@ body {
     padding: 6px 24px;
     gap: 16px;
     z-index: 999;
-    transition: left 0.3s ease; /* Transisi Halus */
+    transition: left 0.3s ease;
 }
 
 .top-navbar.shifted {
-    left: 432px; /* 72px + 360px (lebar panel) */
+    left: 432px;
 }
 
 .search-box {
@@ -298,11 +326,11 @@ body {
     padding-top: 10px;
     padding-left: 24px;
     padding-right: 24px;
-    transition: margin-left 0.3s ease; /* Transisi Halus */
+    transition: margin-left 0.3s ease;
 }
 
 .main-content.shifted {
-    margin-left: 432px; /* 72px + 360px (lebar panel) */
+    margin-left: 432px;
 }
 
 .main-content > *:first-child {
@@ -322,7 +350,7 @@ body {
     padding: 24px 16px;
     display: none;
     flex-direction: column;
-    z-index: 998; /* Lebih rendah dari sidebar */
+    z-index: 998;
     box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05);
     overflow-y: auto;
 }
@@ -434,15 +462,18 @@ body {
 <!-- Sidebar Kiri -->
 <aside class="sidebar">
     <nav class="sidebar-menu">
-        <a href="/galeri_foto/index.php" title="Beranda"><i class="fa-solid fa-house"></i></a>
-        <a href="#" title="Jelajahi"><i class="fa-regular fa-compass"></i></a>
-        <a href="/galeri_foto/frontend/pages/profile.php" title="Kategori"><i class="fa-solid fa-table-cells"></i></a>
+        <a href="/galeri_foto/index.php" class="sidebar-logo" title="Galeri Foto">
+            <img src="/galeri_foto/backend/uploads/logo.png" alt="Logo">
+        </a>
+        <a href="/galeri_foto/index.php" class="<?php echo ($current_page === 'index.php') ? 'active' : ''; ?>" title="Beranda"><i class="fa-solid fa-house"></i></a>
+        <!--<a href="#" class="<?php echo ($current_page === 'explore.php') ? 'active' : ''; ?>" title="Jelajahi"><i class="fa-regular fa-compass"></i></a>-->
+        <a href="/galeri_foto/frontend/pages/profile.php" class="<?php echo ($current_page === 'profile.php') ? 'active' : ''; ?>" title="Kategori"><i class="fa-solid fa-table-cells"></i></a>
         <a href="javascript:void(0)" id="btnTambah" title="Buat"><i class="fa-regular fa-square-plus"></i></a>
         <a href="javascript:void(0)" id="btnNotifikasi" title="Notifikasi"><i class="fa-regular fa-bell"></i></a>
-        <a href="#" title="Pesan"><i class="fa-regular fa-comment-dots"></i></a>
+        <a href="#" class="<?php echo ($current_page === 'pesan.php') ? 'active' : ''; ?>" title="Pesan"><i class="fa-regular fa-comment-dots"></i></a>
     </nav>
     <div class="sidebar-bottom">
-        <a href="#" title="Pengaturan"><i class="fa-solid fa-gear"></i></a>
+        <a href="#" class="<?php echo ($current_page === 'pengaturan.php') ? 'active' : ''; ?>" title="Pengaturan"><i class="fa-solid fa-gear"></i></a>
     </div>
 </aside>
 
@@ -556,15 +587,20 @@ document.addEventListener('DOMContentLoaded', function() {
         btnTambah.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            if (notificationPanel) notificationPanel.classList.remove('open');
+            if (notificationPanel) {
+                notificationPanel.classList.remove('open');
+                if (btnNotifikasi) btnNotifikasi.classList.remove('active');
+            }
             
             const isOpen = createPanel.classList.toggle('open');
+            this.classList.toggle('active', isOpen);
             toggleContentShift(isOpen);
         });
 
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
                 createPanel.classList.remove('open');
+                if (btnTambah) btnTambah.classList.remove('active');
                 toggleContentShift(false);
             });
         }
@@ -575,15 +611,20 @@ document.addEventListener('DOMContentLoaded', function() {
         btnNotifikasi.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            if (createPanel) createPanel.classList.remove('open');
+            if (createPanel) {
+                createPanel.classList.remove('open');
+                if (btnTambah) btnTambah.classList.remove('active');
+            }
 
             const isOpen = notificationPanel.classList.toggle('open');
+            this.classList.toggle('active', isOpen);
             toggleContentShift(isOpen);
         });
 
         if (closeNotifBtn) {
             closeNotifBtn.addEventListener('click', function() {
                 notificationPanel.classList.remove('open');
+                if (btnNotifikasi) btnNotifikasi.classList.remove('active');
                 toggleContentShift(false);
             });
         }
@@ -595,12 +636,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (createPanel && !createPanel.contains(e.target) && !btnTambah.contains(e.target)) {
             if (createPanel.classList.contains('open')) {
                 createPanel.classList.remove('open');
+                btnTambah.classList.remove('active');
                 closedAny = true;
             }
         }
         if (notificationPanel && !notificationPanel.contains(e.target) && !btnNotifikasi.contains(e.target)) {
             if (notificationPanel.classList.contains('open')) {
                 notificationPanel.classList.remove('open');
+                btnNotifikasi.classList.remove('active');
                 closedAny = true;
             }
         }

@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 include '../../backend/config/connection.php';
 
-$id_user_login = $_SESSION['id_user'] ?? null;
+$id_user_login =$_SESSION['id_user'] ?? null;
 
 // Jika user belum login, alihkan ke login
 if (!$id_user_login) {
@@ -13,23 +13,22 @@ if (!$id_user_login) {
 }
 
 // Ambil data profile TERBARU dari database
-$qUser = $koneksi->prepare("SELECT username, email, foto_profil FROM user WHERE id_user = ?");
-$qUser->bind_param("i", $id_user_login);
-$qUser->execute();
-$resUser = $qUser->get_result();
-if ($dataUser = $resUser->fetch_assoc()) {
-    $_SESSION['username'] = $dataUser['username'];
-    $_SESSION['email'] = $dataUser['email'];
-    $_SESSION['foto_profil'] = $dataUser['foto_profil'];
+$qUser =$koneksi->prepare("SELECT username, email, foto_profil FROM user WHERE id_user = ?");
+$qUser->bind_param("i", $id_user_login);$qUser->execute();
+$resUser =$qUser->get_result();
+if ($dataUser =$resUser->fetch_assoc()) {
+    $_SESSION['username'] =$dataUser['username'];
+    $_SESSION['email'] =$dataUser['email'];
+    $_SESSION['foto_profil'] =$dataUser['foto_profil'];
 }
 $qUser->close();
 
 // Ambil tab dari URL, default ke 'boards'
-$tab = $_GET['tab'] ?? 'boards';
+$tab =$_GET['tab'] ?? 'boards';
 
 // FIX: Cek foto profil di 2 kemungkinan folder (backend/uploads = lokasi baku, uploads = folder lama)
 $avatar_src = null;
-$fp = $_SESSION['foto_profil'] ?? '';
+$fp =$_SESSION['foto_profil'] ?? '';
 if (!empty($fp)) {
     if (file_exists(__DIR__ . '/../../backend/uploads/' . $fp)) {
         $avatar_src = '../../backend/uploads/' . htmlspecialchars($fp);
@@ -120,19 +119,21 @@ include '../partials/navbar.php';
 </div>
 
 <style>
-/* CSS Layout Utama */
+/* Perubahan Layout Utama: Geser Konten Lebih ke Kiri & Turun ke Bawah */
 .profile-header-container {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding-top: 10px;
+    max-width: 100%;       /* Lebar penuh agar konten bisa menempel lebih ke kiri */
+    margin: 0;             /* Menghilangkan margin auto tengah */
+    padding-top: 36px;     /* Menambahkan jarak atas agar tidak menempel dengan search bar navbar */
+    padding-left: 12px;    /* Memberikan sedikit jarak bernapas dari sidebar kiri */
+    padding-right: 24px;   /* Jarak dari sisi kanan layar */
 }
 
 .profile-top-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
 .saved-ideas-title {
