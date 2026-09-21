@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="/galeri_foto/frontend/partials/style.css">
 <style>
   html, body {
@@ -29,6 +30,32 @@
     width: 100% !important;
     height: 100% !important;
     background: var(--paper-2, #F6F3EC) !important;
+  }
+
+  /* Style Tambahan Khusus Wrapper & Icon Password */
+  .password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .password-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* Biar teks tidak tertutup ikon */
+  }
+
+  .toggle-password-icon {
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    color: #666;
+    user-select: none;
+    z-index: 5;
+  }
+
+  .toggle-password-icon:hover {
+    color: #111;
   }
 </style>
 </head>
@@ -68,17 +95,20 @@
       <div class="panes">
 
         <div class="pane pane-login">
-  <form action="../../backend/controllers/auth_process.php" method="POST">
-  <div class="field">
-    <label for="login-email">Email</label>
-    <input type="email" id="login-email" name="email" placeholder="nama@email.com" required>
-  </div>
-  <div class="field">
-    <label for="login-password">Kata sandi</label>
-    <input type="password" id="login-password" name="password" placeholder="Kata sandi" required>
-  </div>
-  <button type="submit" name="login" class="submit">Masuk</button>
-</form>
+          <form action="../../backend/controllers/auth_process.php" method="POST">
+            <div class="field">
+              <label for="login-email">Email</label>
+              <input type="email" id="login-email" name="email" placeholder="nama@email.com" required>
+            </div>
+            <div class="field">
+              <label for="login-password">Kata sandi</label>
+              <div class="password-wrapper">
+                <input type="password" id="login-password" name="password" placeholder="Kata sandi" required>
+                <i class="fa-regular fa-eye toggle-password-icon" onclick="togglePassword('login-password', this)"></i>
+              </div>
+            </div>
+            <button type="submit" name="login" class="submit">Masuk</button>
+          </form>
           <p class="hint">Belum punya papan sendiri? Klik "Daftar" di atas.</p>
         </div>
 
@@ -94,7 +124,10 @@
             </div>
             <div class="field">
               <label for="reg-password">Kata sandi</label>
-              <input type="password" id="reg-password" name="password" placeholder="Kata sandi" required>
+              <div class="password-wrapper">
+                <input type="password" id="reg-password" name="password" placeholder="Kata sandi" required>
+                <i class="fa-regular fa-eye toggle-password-icon" onclick="togglePassword('reg-password', this)"></i>
+              </div>
             </div>
             <div class="field">
               <label for="reg-nama">Nama lengkap</label>
@@ -113,6 +146,21 @@
   </section>
 
 </div>
+
+<script>
+  function togglePassword(inputId, iconElement) {
+    const passwordInput = document.getElementById(inputId);
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      iconElement.classList.remove('fa-eye');
+      iconElement.classList.add('fa-eye-slash');
+    } else {
+      passwordInput.type = 'password';
+      iconElement.classList.remove('fa-eye-slash');
+      iconElement.classList.add('fa-eye');
+    }
+  }
+</script>
 
 </body>
 </html>
