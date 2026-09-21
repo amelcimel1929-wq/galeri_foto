@@ -11,17 +11,22 @@ include '../partials/header.php';
 include '../partials/navbar.php';
 
 $id_foto = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$id_user_login = $_SESSION['id_user'];
+$id_user_login =$_SESSION['id_user'];
+
+// --- PENENTUAN URL KEMBALI DINAMIS ---
+$back_url = '../../index.php'; // Default jika diakses langsung
+
+if (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
+    $back_url =$_SERVER['HTTP_REFERER'];
+}
 
 // --- AMBIL DETAIL FOTO & UPLOADER ---
 $query = "SELECT foto.*, user.username, user.nama_lengkap 
           FROM foto 
           JOIN user ON foto.id_user = user.id_user 
           WHERE foto.id_foto = ?";
-$stmt = $koneksi->prepare($query);
-$stmt->bind_param("i", $id_foto);
-$stmt->execute();
-$foto = $stmt->get_result()->fetch_assoc();
+$stmt =$koneksi->prepare($query);$stmt->bind_param("i", $id_foto);$stmt->execute();
+$foto =$stmt->get_result()->fetch_assoc();
 
 if (!$foto) {
     echo "<p style='margin-top:100px; text-align:center;'>Foto tidak ditemukan.</p>";
@@ -29,7 +34,7 @@ if (!$foto) {
 }
 
 $file_path = "../../backend/uploads/" . htmlspecialchars($foto['lokasi_file']);
-$uploader_id = $foto['id_user'];
+$uploader_id =$foto['id_user'];
 ?>
 
 <style>
@@ -357,7 +362,8 @@ $uploader_id = $foto['id_user'];
         <!-- Kartu Utama -->
         <div class="pin-main-card">
             <div class="pin-photo-container">
-                <a href="../../index.php" class="btn-back-overlay" title="Kembali" onclick="event.stopPropagation();">
+                <!-- href disesuaikan secara dinamis dari $back_url -->
+                <a href="<?php echo htmlspecialchars($back_url); ?>" class="btn-back-overlay" title="Kembali" onclick="event.stopPropagation();">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                     </svg>
@@ -425,12 +431,11 @@ $uploader_id = $foto['id_user'];
             <?php
             $rec_side = "SELECT * FROM foto WHERE id_user = ? AND id_foto != ? ORDER BY id_foto DESC LIMIT 2";
             $stmt_side = $koneksi->prepare($rec_side);
-            $stmt_side->bind_param("ii", $uploader_id, $id_foto);
-            $stmt_side->execute();
-            $res_side = $stmt_side->get_result();
+            $stmt_side->bind_param("ii", $uploader_id, $id_foto);$stmt_side->execute();
+            $res_side =$stmt_side->get_result();
 
             if ($res_side->num_rows > 0):
-                while ($rec = $res_side->fetch_assoc()):
+                while ($rec =$res_side->fetch_assoc()):
                     $rec_path = "../../backend/uploads/" . htmlspecialchars($rec['lokasi_file']);
             ?>
                     <div class="recommend-item">

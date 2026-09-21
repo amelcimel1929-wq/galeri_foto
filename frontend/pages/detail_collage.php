@@ -209,8 +209,8 @@ $upload_path = "../../backend/uploads/";
         if ($resFotos->num_rows > 0):
             while ($foto = $resFotos->fetch_assoc()):
         ?>
-                <!-- Klik item foto akan memicu fungsi openModal(...) -->
-                <div class="grid-item" onclick="openModal('<?= $upload_path . htmlspecialchars($foto['lokasi_file']); ?>')">
+                <!-- Mengarahkan ke detail.php?id=... (disesuaikan dengan parameter di detail.php kamu) -->
+                <div class="grid-item" onclick="window.location.href='detail.php?id=<?= $foto['id_foto']; ?>'">
                     <img src="<?= $upload_path . htmlspecialchars($foto['lokasi_file']); ?>" 
                          alt="<?= htmlspecialchars($foto['judul_foto']); ?>">
                 </div>

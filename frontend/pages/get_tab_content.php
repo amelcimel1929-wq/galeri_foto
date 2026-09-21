@@ -31,12 +31,18 @@ $upload_path = "../../backend/uploads/";
         border-radius: 16px;
         overflow: hidden;
         position: relative;
-        cursor: pointer;
         transition: transform 0.2s ease;
     }
 
     .grid-item:hover {
         transform: scale(1.02);
+    }
+
+    .grid-item a {
+        display: block;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
     }
 
     .grid-item img {
@@ -92,52 +98,6 @@ $upload_path = "../../backend/uploads/";
     .board-count { font-size: 0.85rem; color: #767676; margin: 0; }
     .empty-state-text { color: #767676; grid-column: 1/-1; padding: 20px 0; text-align: center; }
 
-    /* ================= 3. MODAL POP-UP IMAGE ================= */
-    .image-modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.75);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(4px);
-    }
-
-    .image-modal-overlay.active { display: flex; }
-
-    .image-modal-content {
-        position: relative;
-        max-width: 80vw;
-        max-height: 85vh;
-        background: #fff;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .image-modal-content img {
-        max-width: 80vw;
-        max-height: 85vh;
-        object-fit: contain;
-        display: block;
-    }
-
-    .image-modal-close {
-        position: absolute;
-        top: 15px;
-        right: 20px;
-        color: #fff;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 10000;
-        text-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-
     @media (max-width: 1200px) { .grid-photos { column-count: 4; } }
     @media (max-width: 900px)  { .grid-photos { column-count: 3; } }
     @media (max-width: 600px)  { .grid-photos { column-count: 2; } }
@@ -165,9 +125,12 @@ $upload_path = "../../backend/uploads/";
             if ($res->num_rows > 0):
                 while ($row = $res->fetch_assoc()):
             ?>
-                    <div class="grid-item" onclick="openModal('<?= $upload_path . htmlspecialchars($row['lokasi_file']); ?>')">
-                        <img src="<?= $upload_path . htmlspecialchars($row['lokasi_file']); ?>" 
-                             alt="<?= htmlspecialchars($row['judul_foto'] ?? 'Liked Foto'); ?>">
+                    <!-- Buka halaman detail.php saat diklik -->
+                    <div class="grid-item">
+                        <a href="detail.php?id=<?= $row['id_foto']; ?>">
+                            <img src="<?= $upload_path . htmlspecialchars($row['lokasi_file']); ?>" 
+                                 alt="<?= htmlspecialchars($row['judul_foto'] ?? 'Liked Foto'); ?>">
+                        </a>
                     </div>
             <?php 
                 endwhile;
@@ -212,7 +175,6 @@ $upload_path = "../../backend/uploads/";
                     }
                     $stmt4F->close();
                 ?>
-                    <!-- TAUTAN DIUBAH KE detail_collage.php -->
                     <a href="detail_collage.php?id_album_favorit=<?= $album['id_album_favorit']; ?>" class="board-card-container">
                         <div class="board-cover-grid">
                             <?php 
@@ -309,8 +271,11 @@ $upload_path = "../../backend/uploads/";
             ?>
                 <div class="grid-photos">
                     <?php while ($fu = $resFU->fetch_assoc()): ?>
-                        <div class="grid-item" onclick="openModal('<?= $upload_path . htmlspecialchars($fu['lokasi_file']); ?>')">
-                            <img src="<?= $upload_path . htmlspecialchars($fu['lokasi_file']); ?>" alt="Foto User">
+                        <!-- Buka halaman detail.php saat diklik -->
+                        <div class="grid-item">
+                            <a href="detail.php?id=<?= $fu['id_foto']; ?>">
+                                <img src="<?= $upload_path . htmlspecialchars($fu['lokasi_file']); ?>" alt="Foto User">
+                            </a>
                         </div>
                     <?php endwhile; ?>
                 </div>
@@ -326,30 +291,3 @@ $upload_path = "../../backend/uploads/";
     <?php endif; ?>
 
 <?php endif; ?>
-
-<!-- HTML STRUCT POPUP MODAL -->
-<div id="imageModal" class="image-modal-overlay" onclick="closeModal(event)">
-    <span class="image-modal-close" onclick="forceCloseModal()">&times;</span>
-    <div class="image-modal-content" onclick="event.stopPropagation()">
-        <img id="modalImg" src="" alt="Preview Gambar">
-    </div>
-</div>
-
-<script>
-    function openModal(imageSrc) {
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImg');
-        modalImg.src = imageSrc;
-        modal.classList.add('active');
-    }
-
-    function closeModal(event) {
-        if (event.target.id === 'imageModal') {
-            document.getElementById('imageModal').classList.remove('active');
-        }
-    }
-
-    function forceCloseModal() {
-        document.getElementById('imageModal').classList.remove('active');
-    }
-</script>

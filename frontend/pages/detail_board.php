@@ -84,6 +84,8 @@ include '../partials/navbar.php';
         align-items: flex-start;
     }
     .gallery-item {
+        display: block;
+        text-decoration: none;
         background: #f0f0f0;
         border-radius: 16px;
         overflow: hidden;
@@ -163,10 +165,10 @@ include '../partials/navbar.php';
         <div class="flex-gallery">
             <?php if ($resFotos->num_rows > 0): ?>
                 <?php while ($foto = $resFotos->fetch_assoc()): ?>
-                    <div class="gallery-item" onclick="openLightbox('../../backend/uploads/<?= htmlspecialchars($foto['lokasi_file']); ?>')">
+                    <a href="detail.php?id=<?= $foto['id_foto']; ?>" class="gallery-item">
                         <img src="../../backend/uploads/<?= htmlspecialchars($foto['lokasi_file']); ?>" 
                              alt="<?= htmlspecialchars($foto['judul_foto'] ?? 'Foto Board'); ?>">
-                    </div>
+                    </a>
                 <?php endwhile; ?>
             <?php else: ?>
                 <p style="color: #767676;">Belum ada foto dalam board ini.</p>

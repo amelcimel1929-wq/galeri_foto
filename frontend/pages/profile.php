@@ -23,10 +23,11 @@ if ($dataUser =$resUser->fetch_assoc()) {
 }
 $qUser->close();
 
-// Ambil tab dari URL, default ke 'boards'
+// Ambil tab & filter privasi dari URL
 $tab =$_GET['tab'] ?? 'boards';
+$privacy =$_GET['privacy'] ?? 'all';
 
-// FIX: Cek foto profil di 2 kemungkinan folder (backend/uploads = lokasi baku, uploads = folder lama)
+// Cek foto profil
 $avatar_src = null;
 $fp =$_SESSION['foto_profil'] ?? '';
 if (!empty($fp)) {
@@ -45,13 +46,14 @@ include '../partials/navbar.php';
 <main class="main-content">
     <div class="profile-header-container">
 
-        <!-- Header Profil Presisi Sesuai Gambar -->
+        <!-- Header Profil -->
         <div class="profile-top-row">
 
             <!-- Sisi Kiri: Judul & Tab Navigasi -->
             <div class="profile-left-col">
                 <h1 class="saved-ideas-title">Your saved ideas</h1>
 
+                <!-- Tab Utama -->
                 <div class="profile-tabs">
                     <a href="?tab=liked" data-tab="liked" class="tab-item <?= $tab === 'liked' ? 'active' : '' ?>">Liked</a>
                     <a href="?tab=boards" data-tab="boards" class="tab-item <?= $tab === 'boards' ? 'active' : '' ?>">Boards</a>
@@ -62,7 +64,6 @@ include '../partials/navbar.php';
             <!-- Sisi Kanan: Avatar, Nama, Following, Share Profile -->
             <div class="profile-right-col">
                 
-                <!-- Wrapper Avatar Profil -->
                 <div class="profile-avatar-wrapper">
                     <a href="profile_pribadi.php" class="avatar-link" title="Lihat Profil">
                         <?php if ($avatar_src): ?>
@@ -74,13 +75,11 @@ include '../partials/navbar.php';
                         <?php endif; ?>
                     </a>
 
-                    <!-- Tombol Pensil Memicu Modal Pop-Up -->
                     <button type="button" class="edit-avatar-btn" id="openModalBtn" title="Change picture">
                         <i class="fa-solid fa-pencil"></i>
                     </button>
                 </div>
 
-                <!-- Info Username & Following -->
                 <div class="profile-details">
                     <h2>
                         <a href="profile_pribadi.php" class="username-link">
@@ -90,10 +89,22 @@ include '../partials/navbar.php';
                     <p class="following-count">0 following</p>
                 </div>
 
-                <!-- Tombol Share Profile -->
                 <button type="button" class="btn-share-profile">Share profile</button>
             </div>
 
+        </div>
+
+        <!-- Sub-Tab Privasi (Hanya muncul saat tab Boards aktif) -->
+        <div class="privacy-subtabs" id="privacy-subtabs" style="<?= $tab === 'boards' ? 'display: flex;' : 'display: none;' ?>">
+            <a href="?tab=boards&privacy=all" data-privacy="all" class="subtab-item <?= $privacy === 'all' ? 'active' : '' ?>">
+                <i class="fa-solid fa-border-all"></i> Semua
+            </a>
+            <a href="?tab=boards&privacy=public" data-privacy="public" class="subtab-item <?= $privacy === 'public' ? 'active' : '' ?>">
+                <i class="fa-solid fa-globe"></i> Public
+            </a>
+            <a href="?tab=boards&privacy=private" data-privacy="private" class="subtab-item <?= $privacy === 'private' ? 'active' : '' ?>">
+                <i class="fa-solid fa-lock"></i> Private
+            </a>
         </div>
 
         <!-- Area Dynamic Tab Content -->
@@ -110,7 +121,6 @@ include '../partials/navbar.php';
         <span class="modal-close" id="closeModalBtn">&times;</span>
         <h2>Change your picture</h2>
         
-        <!-- Form mengirimkan gambar ke file ganti_profile_process.php -->
         <form action="../../backend/controllers/ganti_profile_process.php" method="POST" enctype="multipart/form-data">
             <input type="file" name="foto_profil" id="fileInput" accept="image/*" style="display: none;" required onchange="this.form.submit()">
             <button type="button" class="btn-choose-photo" onclick="document.getElementById('fileInput').click()">Choose photo</button>
@@ -119,21 +129,20 @@ include '../partials/navbar.php';
 </div>
 
 <style>
-/* Perubahan Layout Utama: Geser Konten Lebih ke Kiri & Turun ke Bawah */
 .profile-header-container {
     width: 100%;
-    max-width: 100%;       /* Lebar penuh agar konten bisa menempel lebih ke kiri */
-    margin: 0;             /* Menghilangkan margin auto tengah */
-    padding-top: 36px;     /* Menambahkan jarak atas agar tidak menempel dengan search bar navbar */
-    padding-left: 12px;    /* Memberikan sedikit jarak bernapas dari sidebar kiri */
-    padding-right: 24px;   /* Jarak dari sisi kanan layar */
+    max-width: 100%;
+    margin: 0;
+    padding-top: 36px;
+    padding-left: 20px;
+    padding-right: 24px;
 }
 
 .profile-top-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
 }
 
 .saved-ideas-title {
@@ -145,15 +154,15 @@ include '../partials/navbar.php';
 
 .profile-tabs {
     display: flex;
-    gap: 16px;
+    gap: 12px;
 }
 
 .tab-item {
     text-decoration: none;
     color: #111;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    padding: 8px 16px;
+    padding: 8px 18px;
     border-radius: 20px;
     transition: background 0.2s;
 }
@@ -163,14 +172,45 @@ include '../partials/navbar.php';
     color: #fff;
 }
 
-/* Sisi Kanan (Avatar & Info User) */
+/* Style Sub-Tab Privasi (Public & Private) */
+.privacy-subtabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    margin-top: 10px;
+}
+
+.subtab-item {
+    text-decoration: none;
+    color: #5f5f5f;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 16px;
+    background-color: #f0f0f0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.subtab-item:hover {
+    background-color: #e2e2e2;
+    color: #111;
+}
+
+.subtab-item.active {
+    background-color: #e60023;
+    color: #ffffff;
+}
+
+/* Sisi Kanan Profil */
 .profile-right-col {
     display: flex;
     align-items: center;
     gap: 16px;
 }
 
-/* Wrapper Avatar & Tombol Pensil */
 .profile-avatar-wrapper {
     position: relative;
     width: 60px;
@@ -207,7 +247,6 @@ include '../partials/navbar.php';
     border-radius: 50%;
 }
 
-/* Tombol Pensil Bulat Kecil */
 .edit-avatar-btn {
     position: absolute;
     bottom: -2px;
@@ -228,34 +267,13 @@ include '../partials/navbar.php';
     z-index: 2;
 }
 
-.edit-avatar-btn:hover {
-    background-color: #f0f0f0;
-}
+.edit-avatar-btn:hover { background-color: #f0f0f0; }
 
-/* Info Username & Following */
-.profile-details h2 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1.2;
-}
+.profile-details h2 { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.2; }
+.username-link { text-decoration: none; color: #111; }
+.username-link:hover { text-decoration: underline; }
+.following-count { margin: 2px 0 0 0; font-size: 13px; color: #5f5f5f; }
 
-.username-link {
-    text-decoration: none;
-    color: #111;
-}
-
-.username-link:hover {
-    text-decoration: underline;
-}
-
-.following-count {
-    margin: 2px 0 0 0;
-    font-size: 13px;
-    color: #5f5f5f;
-}
-
-/* Tombol Share Profile */
 .btn-share-profile {
     background-color: #e9e9e9;
     color: #111;
@@ -268,19 +286,13 @@ include '../partials/navbar.php';
     transition: background 0.2s;
     margin-left: 8px;
 }
+.btn-share-profile:hover { background-color: #e2e2e2; }
 
-.btn-share-profile:hover {
-    background-color: #e2e2e2;
-}
-
-/* Modal Pop-up CSS */
+/* Modal Pop-Up */
 .modal-overlay {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.4);
     z-index: 10000;
     justify-content: center;
@@ -298,21 +310,8 @@ include '../partials/navbar.php';
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
-.modal-content h2 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 24px;
-    color: #111;
-}
-
-.modal-close {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 22px;
-    cursor: pointer;
-    color: #666;
-}
+.modal-content h2 { font-size: 24px; font-weight: 700; margin-bottom: 24px; color: #111; }
+.modal-close { position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #666; }
 
 .btn-choose-photo {
     width: 100%;
@@ -326,14 +325,11 @@ include '../partials/navbar.php';
     cursor: pointer;
     transition: background 0.2s;
 }
-
-.btn-choose-photo:hover {
-    background-color: #ad081b;
-}
+.btn-choose-photo:hover { background-color: #ad081b; }
 </style>
 
 <script>
-// Event Modal Edit Profile
+// Modal Event Handlers
 const modal = document.getElementById('avatarModal');
 const openBtn = document.getElementById('openModalBtn');
 const closeBtn = document.getElementById('closeModalBtn');
@@ -345,24 +341,57 @@ window.onclick = (e) => {
     if (e.target === modal) modal.style.display = 'none';
 };
 
-// Script Tab AJAX
+// Fungsi memuat konten tab/filter dengan AJAX
+function loadContent(tab, privacy = 'all') {
+    const subtabsContainer = document.getElementById('privacy-subtabs');
+    
+    // Tampilkan/Sembunyikan sub-tab tergantung tab utama
+    if (tab === 'boards') {
+        subtabsContainer.style.display = 'flex';
+    } else {
+        subtabsContainer.style.display = 'none';
+    }
+
+    // Update URL tanpa reload
+    const url = `?tab=${tab}&privacy=${privacy}`;
+    window.history.pushState({}, '', url);
+
+    // Ambil data via AJAX
+    fetch(`get_tab_content.php?tab=${tab}&privacy=${privacy}&_t=${new Date().getTime()}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('tab-content').innerHTML = html;
+        })
+        .catch(err => console.error('Gagal memuat konten:', err));
+}
+
+// Handler klik Tab Utama (Liked, Boards, Collages)
 document.querySelectorAll('.tab-item').forEach(tab => {
     tab.addEventListener('click', function (e) {
         e.preventDefault();
-
         const selectedTab = this.dataset.tab;
 
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
 
-        window.history.pushState({}, '', '?tab=' + selectedTab);
+        // Reset subtab ke 'all' saat ganti tab utama
+        document.querySelectorAll('.subtab-item').forEach(s => s.classList.remove('active'));
+        document.querySelector('.subtab-item[data-privacy="all"]')?.classList.add('active');
 
-        fetch(`get_tab_content.php?tab=${selectedTab}&_t=${new Date().getTime()}`)
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('tab-content').innerHTML = html;
-            })
-            .catch(err => console.error('Gagal load tab:', err));
+        loadContent(selectedTab, 'all');
+    });
+});
+
+// Handler klik Sub-Tab Privasi (Semua, Public, Private)
+document.querySelectorAll('.subtab-item').forEach(subtab => {
+    subtab.addEventListener('click', function (e) {
+        e.preventDefault();
+        const selectedPrivacy = this.dataset.privacy;
+
+        document.querySelectorAll('.subtab-item').forEach(s => s.classList.remove('active'));
+        this.classList.add('active');
+
+        loadContent('boards', selectedPrivacy);
     });
 });
 </script>
