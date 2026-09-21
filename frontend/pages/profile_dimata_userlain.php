@@ -37,17 +37,31 @@ $foto_profil   = $userData['foto_profil'] ?? '';
 $inisial       = strtoupper(substr($nama_user, 0, 1));
 
 // -------------------------------------------------------------
-// CEK STATUS FOLLOW (Apakah User Login Sudah Follow User Target?)
+// CEK STATUS FOLLOW & MUTUAL FOLLOW
 // -------------------------------------------------------------
-$is_following = false;
+$is_following   = false; // Apakah User Login mem-follow User Target
+$is_followed_by = false; // Apakah User Target mem-follow balik User Login
+
 if ($id_user_login > 0 && $user_id_target > 0) {
+    // 1. Cek apakah User Login mem-follow User Target
     $qCheckFollow = "SELECT 1 FROM follow WHERE id_follower = ? AND id_following = ?";
     $stmtCheck = $koneksi->prepare($qCheckFollow);
     $stmtCheck->bind_param("ii", $id_user_login, $user_id_target);
     $stmtCheck->execute();
     $is_following = $stmtCheck->get_result()->num_rows > 0;
     $stmtCheck->close();
+
+    // 2. Cek apakah User Target mem-follow balik User Login
+    $qCheckFollowed = "SELECT 1 FROM follow WHERE id_follower = ? AND id_following = ?";
+    $stmtCheck2 = $koneksi->prepare($qCheckFollowed);
+    $stmtCheck2->bind_param("ii", $user_id_target, $id_user_login);
+    $stmtCheck2->execute();
+    $is_followed_by = $stmtCheck2->get_result()->num_rows > 0;
+    $stmtCheck2->close();
 }
+
+// Status Saling Follow (Mutual)
+$is_mutual = $is_following && $is_followed_by;
 
 // -------------------------------------------------------------
 // PENANGANAN PATH UPLOAD & FOTO PROFIL
@@ -257,13 +271,19 @@ if (!empty($foto_profil) && file_exists($sys_upload_dir . $foto_profil)) {
                             <div class="profile-action-row">
                                 <button class="btn btn-custom-gray">Pesan</button>
                                 
-                                <!-- FORM DENGAN TOMBOL FOLLOW / UNFOLLOW -->
+                                <!-- FORM DENGAN TOMBOL FOLLOW / UNFOLLOW / TEMAN -->
                                 <form action="/galeri_foto/backend/controllers/follow_process.php" method="POST" style="display:inline;">
                                     <input type="hidden" name="id_following" value="<?= $user_id_target; ?>">
-                                    <?php if ($is_following): ?>
+                                    <?php if ($is_mutual): ?>
+                                        <button type="submit" class="btn btn-custom-gray">
+                                            <i class="fa-solid fa-user-group me-1"></i> Teman
+                                        </button>
+                                    <?php elseif ($is_following): ?>
                                         <button type="submit" class="btn btn-custom-gray">Mengikuti</button>
                                     <?php else: ?>
-                                        <button type="submit" class="btn btn-custom-red">Ikuti</button>
+                                        <button type="submit" class="btn btn-custom-red">
+                                            <?= $is_followed_by ? 'Ikuti Balik' : 'Ikuti'; ?>
+                                        </button>
                                     <?php endif; ?>
                                 </form>
                             </div>
