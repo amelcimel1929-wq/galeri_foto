@@ -15,27 +15,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 1. PROSES UPLOAD FOTO PROFIL
     if (isset($_FILES['foto_profil']) && $_FILES['foto_profil']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES['foto_profil']['tmp_name'];
-        $fileName = $_FILES['foto_profil']['name'];
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $fileTmpPath   = $_FILES['foto_profil']['tmp_name'];
+        $fileName      = $_FILES['foto_profil']['name'];
 
-        // Buat nama file unik
-        $newFileName = 'profile_' . $user_id . '_' . time() . '.' . $fileExtension;
-        
-        // Path penyimpanan ke folder uploads
-        $uploadFileDir = '../uploads/';
+        // A. Cek Ekstensi File
+        $fileExtension     = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
 
-        if (!is_dir($uploadFileDir)) {
-            mkdir($uploadFileDir, 0755, true);
-        }
+        // B. Cek MIME Type Asli File (Pakai finfo)
+        $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $fileTmpPath);
+        finfo_close($finfo);
 
-        $dest_path = $uploadFileDir . $newFileName;
+        $allowedMime = [
+            'image/jpeg',
+            'image/png',
+            'image/webp'
+        ];
 
-        if (move_uploaded_file($fileTmpPath, $dest_path)) {
-            // Update nama foto di database
-            $stmt = $koneksi->prepare("UPDATE users SET foto_profil = ? WHERE id = ?");
-            $stmt->bind_param("si", $newFileName, $user_id);
-            $stmt->execute();
+        // Jalankan upload HANYA jika ekstensi DAN MIME Type keduanya valid
+        if (in_array($fileExtension, $allowedExtensions) && in_array($mimeType, $allowedMime)) {
+
+            // Buat nama file unik
+            $newFileName = 'profile_' . $user_id . '_' . time() . '.' . $fileExtension;
+            
+            // Path penyimpanan ke folder uploads
+            $uploadFileDir = '../uploads/';
+
+            if (!is_dir($uploadFileDir)) {
+                mkdir($uploadFileDir, 0755, true);
+            }
+
+            $dest_path = $uploadFileDir . $newFileName;
+
+            if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                // Update nama foto di database
+                $stmt = $koneksi->prepare("UPDATE users SET foto_profil = ? WHERE id = ?");
+                $stmt->bind_param("si", $newFileName, $user_id);
+                $stmt->execute();
+                $stmt->close();
+            }
         }
     }
 
@@ -46,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $koneksi->prepare("UPDATE users SET bio = ? WHERE id = ?");
         $stmt->bind_param("si", $bio, $user_id);
         $stmt->execute();
+        $stmt->close();
     }
 
     // Redirect kembali ke halaman profile di frontend
