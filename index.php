@@ -9,6 +9,8 @@ if (!isset($_SESSION['id_user'])) {
 require_once __DIR__ . '/backend/config/connection.php';
 include 'frontend/partials/header.php';
 include 'frontend/partials/navbar.php';
+
+$id_user_login = $_SESSION['id_user'];
 ?>
 
 <style>
@@ -48,7 +50,7 @@ include 'frontend/partials/navbar.php';
         align-items: flex-end;
         padding: 12px;
         box-sizing: border-box;
-        pointer-events: none; /* Supaya klik di area kosong overlay tetap menembus ke tag <a> gambar */
+        pointer-events: none;
     }
     .pin-card:hover .pin-overlay {
         opacity: 1;
@@ -56,7 +58,7 @@ include 'frontend/partials/navbar.php';
     
     /* Tombol Unduh SVG */
     .btn-download-icon {
-        pointer-events: auto; /* Tombol unduh tetap bisa diklik */
+        pointer-events: auto;
         background: #ffffff;
         width: 36px;
         height: 36px;
@@ -91,10 +93,15 @@ include 'frontend/partials/navbar.php';
 <main class="main-content">
     <div class="pin-container">
         <?php
-        $query = "SELECT * FROM foto ORDER BY tanggal_ungahan DESC";
-        $stmt  = $koneksi->prepare($query);
+        // Query hanya mengambil foto publik ATAU foto privat milik user yang sedang login
+        $query = "SELECT * FROM foto 
+                  WHERE visibilitas = 'public' OR (visibilitas = 'private' AND id_user = ?) 
+                  ORDER BY tanggal_ungahan DESC";
+                  
+        $stmt = $koneksi->prepare($query);
 
         if ($stmt) {
+            $stmt->bind_param("i", $id_user_login);
             $stmt->execute();
             $result = $stmt->get_result();
 
@@ -127,7 +134,7 @@ include 'frontend/partials/navbar.php';
                 endwhile;
             else:
         ?>
-                <p style="text-align: center; color: #767676;">Belum ada foto yang diunggah.</p>
+                <p style="text-align: center; color: #767676; grid-column: 1/-1;">Belum ada foto yang ditampilkan.</p>
         <?php 
             endif;
             $stmt->close();
