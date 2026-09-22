@@ -57,6 +57,8 @@ if (isset($_FILES['foto_profil']) && $_FILES['foto_profil']['error'] === UPLOAD_
             // Update session
             $_SESSION['foto_profil'] = $newFileName;
         }
+    } else {
+        echo "File Tidak Valid";
     }
 }
 

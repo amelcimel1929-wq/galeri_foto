@@ -14,9 +14,7 @@ if (!$id_album) {
     exit;
 }
 
-// 1. Query Data Album — TIDAK dibatasi hanya milik user yang login,
-// supaya board pengguna lain juga bisa dibuka lewat profil mereka.
-// Sekalian JOIN ke tabel user biar tahu siapa pemilik album ini.
+// 1. Query Data Album
 $qAlbum = "SELECT a.*, u.username, u.nama_lengkap 
            FROM album a 
            JOIN user u ON a.id_user = u.id_user 
@@ -32,8 +30,6 @@ if (!$album) {
     exit;
 }
 
-// Cek apakah board ini milik user yang sedang login atau bukan,
-// dipakai untuk menentukan tombol "Kembali" mengarah ke profil siapa.
 $id_pemilik_album = (int) $album['id_user'];
 $is_own_board     = ($id_pemilik_album === (int) $id_user_login);
 
@@ -55,10 +51,13 @@ include '../partials/navbar.php';
 ?>
 
 <style>
+    /* Diubah margin & padding-nya agar lebih rata kiri dan dekat ke samping */
     .board-detail-container {
-        max-width: 1200px;
-        margin: 30px auto;
-        padding: 0 20px;
+        width: 100%;
+        max-width: 100%;
+        margin: 20px 0;
+        padding: 0 24px; /* Menyesuaikan jarak pinggir agar sejajar dengan navbar */
+        box-sizing: border-box;
     }
     .back-btn {
         display: inline-flex;
@@ -76,7 +75,7 @@ include '../partials/navbar.php';
     .board-owner a { color: #111; font-weight: 600; text-decoration: none; }
     .board-owner a:hover { text-decoration: underline; }
 
-    /* LAYOUT FLEXBOX: Foto berjejer ke samping, lalu turun ke bawah jika penuh */
+    /* LAYOUT FLEXBOX: Foto berjejer ke samping */
     .flex-gallery {
         display: flex;
         flex-wrap: wrap;
@@ -98,8 +97,8 @@ include '../partials/navbar.php';
     }
     .gallery-item img {
         display: block;
-        max-width: 260px; /* Lebar maksimal tiap foto */
-        height: auto;     /* Mempertahankan rasio asli (landscape/portrait) */
+        max-width: 260px;
+        height: auto;
         border-radius: 16px;
     }
 
@@ -192,7 +191,6 @@ function openLightbox(imageSrc) {
 }
 
 function closeLightbox(event) {
-    // Tutup jika klik tombol close atau area hitam di luar gambar
     if (event.target.id === 'lightboxModal' || event.target.classList.contains('lightbox-close')) {
         const modal = document.getElementById('lightboxModal');
         modal.classList.remove('active');
