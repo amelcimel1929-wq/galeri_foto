@@ -11,6 +11,9 @@ include 'frontend/partials/header.php';
 include 'frontend/partials/navbar.php';
 
 $id_user_login = $_SESSION['id_user'];
+
+// Tangkap kata kunci pencarian dari URL
+$search_raw = isset($_GET['search']) ? trim($_GET['search']) : '';
 ?>
 
 <style>
@@ -93,22 +96,59 @@ $id_user_login = $_SESSION['id_user'];
 <main class="main-content">
     <div class="pin-container">
         <?php
-        // Query hanya mengambil foto publik ATAU foto privat milik user yang sedang login
-        $query = "SELECT * FROM foto 
-                  WHERE visibilitas = 'public' OR (visibilitas = 'private' AND id_user = ?) 
-                  ORDER BY tanggal_ungahan DESC";
-                  
-        $stmt = $koneksi->prepare($query);
+        if (!empty($search_raw)) {
+            // Pecah kata kunci berdasarkan spasi (misal "nail art" jadi ["nail", "art"])
+            $words = array_filter(explode(' ', $search_raw));
+            
+            $search_conditions = [];
+            $params = [];
+            $types = "i"; // Parameter pertama adalah id_user
+            
+            $params[] = $id_user_login;
 
-        if ($stmt) {
-            $stmt->bind_param("i", $id_user_login);
-            $stmt->execute();
-            $result = $stmt->get_result();
+            foreach ($words as $word) {
+                // Tiap kata dibikin kondisi LIKE untuk judul ATAU deskripsi
+                $search_conditions[] = "(judul_foto LIKE ? OR deskripsi_foto LIKE ?)";
+                $types .= "ss";
+                $searchTerm = '%' . $word . '%';
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+            }
 
-            if ($result->num_rows > 0):
-                while ($row = $result->fetch_assoc()):
-                    $id_foto = $row['id_foto'];
-                    $file_path = "backend/uploads/" . htmlspecialchars($row['lokasi_file']);
+            // Gabungkan dengan OR agar jika cocok dengan SALAH SATU kata, foto tetap ditampilkan
+            $where_search = implode(" OR ", $search_conditions);
+
+            $query = "SELECT * FROM foto 
+                      WHERE (visibilitas = 'public' OR (visibilitas = 'private' AND id_user = ?))
+                      AND ($where_search)
+                      ORDER BY tanggal_ungahan DESC";
+
+            $stmt = $koneksi->prepare($query);
+
+            if ($stmt) {
+                // Binding parameter dinamis
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            }
+        } else {
+            // Query standar tanpa pencarian
+            $query = "SELECT * FROM foto 
+                      WHERE visibilitas = 'public' OR (visibilitas = 'private' AND id_user = ?) 
+                      ORDER BY tanggal_ungahan DESC";
+
+            $stmt = $koneksi->prepare($query);
+            if ($stmt) {
+                $stmt->bind_param("i", $id_user_login);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            }
+        }
+
+        if (isset($result) && $result->num_rows > 0):
+            while ($row = $result->fetch_assoc()):
+                $id_foto = $row['id_foto'];
+                $file_path = "backend/uploads/" . htmlspecialchars($row['lokasi_file']);
         ?>
                     <div class="pin-card">
                         <!-- Link menuju halaman detail -->
@@ -131,12 +171,16 @@ $id_user_login = $_SESSION['id_user'];
                         </div>
                     </div>
         <?php 
-                endwhile;
-            else:
+            endwhile;
+        else:
         ?>
-                <p style="text-align: center; color: #767676; grid-column: 1/-1;">Belum ada foto yang ditampilkan.</p>
+            <p style="text-align: center; color: #767676; grid-column: 1/-1;">
+                <?php echo !empty($search_raw) ? 'Tidak ada foto yang cocok dengan kata kunci "' . htmlspecialchars($search_raw) . '".' : 'Belum ada foto yang ditampilkan.'; ?>
+            </p>
         <?php 
-            endif;
+        endif;
+
+        if (isset($stmt) && $stmt) {
             $stmt->close();
         }
         ?>

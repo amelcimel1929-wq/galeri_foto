@@ -481,7 +481,9 @@ body {
 <header class="top-navbar" id="topNavbar">
     <div class="search-box">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input type="text" placeholder="Search your Pins">
+        <form id="searchForm" action="/galeri_foto/index.php" method="GET" style="width: 100%;">
+            <input type="text" id="searchInput" name="search" placeholder="Search your Pins" value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>" autocomplete="off">
+        </form>
         <i class="fa-solid fa-microphone mic-icon"></i>
     </div>
     
@@ -557,6 +559,9 @@ body {
 
 <!-- INCLUDE PANEL NOTIFIKASI DARI PAGES -->
 <?php include_once __DIR__ . '/../pages/notifikasi.php'; ?>
+
+<!-- Include search.js -->
+<script src="/galeri_foto/frontend/partials/search.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

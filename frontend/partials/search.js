@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const recentGrid = document.getElementById('recentSearchesGrid');
 
     const userIdInput = document.getElementById('userId');
-    const userId = userIdInput ? userIdInput.value : 'guest';
+    const userId = (userIdInput && userIdInput.value) ? userIdInput.value : 'guest';
     const STORAGE_KEY = `recent_searches_${userId}`;
 
     function getRecentSearches() {
@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderRecentSearches() {
+        if (!recentGrid) return;
         const searches = getRecentSearches();
         recentGrid.innerHTML = '';
 
@@ -35,31 +36,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    searchInput.addEventListener('focus', () => {
-        renderRecentSearches();
-        searchDropdown.classList.add('active');
-    });
+    if (searchInput) {
+        searchInput.addEventListener('focus', () => {
+            renderRecentSearches();
+            if (searchDropdown) searchDropdown.classList.add('active');
+        });
+    }
 
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-container')) {
+        if (searchDropdown && !e.target.closest('.search-box')) {
             searchDropdown.classList.remove('active');
         }
     });
 
-    searchForm.addEventListener('submit', () => {
-        const query = searchInput.value.trim();
-        if (query !== '') {
-            let searches = getRecentSearches();
-            searches = searches.filter(item => item.toLowerCase() !== query.toLowerCase());
-            searches.unshift(query);
-            if (searches.length > 6) searches.pop();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(searches));
-        }
-    });
+    if (searchForm) {
+        searchForm.addEventListener('submit', () => {
+            if (searchInput) {
+                const query = searchInput.value.trim();
+                if (query !== '') {
+                    let searches = getRecentSearches();
+                    searches = searches.filter(item => item.toLowerCase() !== query.toLowerCase());
+                    searches.unshift(query);
+                    if (searches.length > 6) searches.pop();
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(searches));
+                }
+            }
+        });
+    }
 
     window.executeSearch = (query) => {
-        searchInput.value = query;
-        searchForm.submit();
+        if (searchInput && searchForm) {
+            searchInput.value = query;
+            searchForm.submit();
+        }
     };
 
     window.deleteSearch = (event, index) => {
