@@ -469,14 +469,13 @@ $visibilitas = $foto['visibilitas'] ?? 'public';
                                         <span id="labelArchive"><?php echo ($visibilitas === 'private') ? 'Jadikan Public' : 'Arsipkan (Private)'; ?></span>
                                     </button>
 
-                                    <!--<button type="button" id="btnDeleteMedia" class="danger-text">
-                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                        </svg>
-                                        Hapus Media
-                                    </button>-->
-                                    
+                                  <button type="button" id="btnDeleteMedia" class="danger-text" onclick="if(confirm('Apakah Anda yakin ingin menghapus media ini?')) { window.location.href='../../backend/controllers/procces_delete_detail.php?id_foto=<?= $foto['id_foto']; ?>'; }">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    </svg>
+    Hapus Media
+</button>                                  
                                 </div>
                             <?php endif; ?>
                         </div>
