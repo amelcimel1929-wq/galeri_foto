@@ -17,6 +17,13 @@ if (!isset($_SESSION['id_user'])) {
 $id_user = $_SESSION['id_user'];
 $action  = $_POST['action'] ?? $_GET['action'] ?? '';
 
+function hapusRelasiFoto(mysqli $db, int $idFoto): void {
+    foreach (['komentar_foto', 'like_foto', 'favorit', 'save_foto', 'notifikasi'] as $table) {
+        $stmt = $db->prepare("DELETE FROM {$table} WHERE id_foto = ?");
+        if ($stmt) { $stmt->bind_param('i', $idFoto); $stmt->execute(); $stmt->close(); }
+    }
+}
+
 // --- AKSI 1: UPLOAD FOTO (ASLI & KODE UTAMA KAMU) ---
 if ($action === 'upload' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -113,6 +120,20 @@ if ($action === 'update_visibilitas' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'update_details' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+    $id_foto = (int)($_POST['id_foto'] ?? 0);
+    $judul = trim($_POST['judul_foto'] ?? '');
+    $deskripsi = trim($_POST['deskripsi_foto'] ?? '');
+    if ($id_foto <= 0 || $judul === '') { echo json_encode(['status'=>'error','message'=>'Judul wajib diisi.']); exit; }
+    $stmt = $koneksi->prepare('UPDATE foto SET judul_foto = ?, deskripsi_foto = ? WHERE id_foto = ? AND id_user = ?');
+    $stmt->bind_param('ssii', $judul, $deskripsi, $id_foto, $id_user);
+    $ok = $stmt->execute();
+    $stmt->close();
+    echo json_encode(['status'=>$ok?'ok':'error','judul_foto'=>$judul,'deskripsi_foto'=>$deskripsi]);
+    exit;
+}
+
 // --- AKSI 3: HAPUS MEDIA ---
 if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
@@ -133,6 +154,7 @@ if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             unlink($filePath);
         }
 
+        hapusRelasiFoto($koneksi, $id_foto);
         // Hapus record dari database
         $stmtDelete = $koneksi->prepare("DELETE FROM foto WHERE id_foto = ? AND id_user = ?");
         $stmtDelete->bind_param("ii", $id_foto, $id_user);

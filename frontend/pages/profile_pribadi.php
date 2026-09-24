@@ -255,6 +255,7 @@ body {
     margin-top: 24px;
     margin-bottom: 24px;
 }
+.tabs-container .tab-item { display:inline-flex; align-items:center; justify-content:center; min-height:40px; }
 
 .tab-item {
     text-decoration: none;
@@ -279,6 +280,8 @@ body {
     margin: 0;
     padding: 0;
 }
+
+.profile-header-container, .tabs-container, #tab-content { max-width:100%; }
 
 #tab-content > * {
     margin-left: 0 !important;

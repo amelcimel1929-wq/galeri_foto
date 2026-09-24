@@ -316,7 +316,20 @@ $ada_notifikasi = !empty($grup_notifikasi['baru']) || !empty($grup_notifikasi['m
                             </div>
 
                             <?php if ($row['tipe'] === 'follow'): ?>
-                                <button type="button" class="notif-follow-btn">Follow Back</button>
+                                <?php
+                                $cekIkut = $koneksi->prepare('SELECT 1 FROM follow WHERE id_follower = ? AND id_following = ?');
+                                $cekIkut->bind_param('ii', $_SESSION['id_user'], $row['id_user_pemicu']);
+                                $cekIkut->execute();
+                                $sudahIkut = $cekIkut->get_result()->num_rows > 0;
+                                $cekIkut->close();
+                                ?>
+                                <?php if (!$sudahIkut && (int)$row['id_user_pemicu'] !== (int)$_SESSION['id_user']): ?>
+                                    <form action="/galeri_foto/backend/controllers/follow_process.php" method="POST" onclick="event.stopPropagation();">
+                                        <input type="hidden" name="id_following" value="<?= (int)$row['id_user_pemicu']; ?>">
+                                        <input type="hidden" name="follow_back" value="1">
+                                        <button type="submit" class="notif-follow-btn">Follow Back</button>
+                                    </form>
+                                <?php else: ?><span class="notif-follow-btn">Teman</span><?php endif; ?>
                             <?php elseif ($url_foto_post): ?>
                                 <div class="notif-img-box notif-thumb-post">
                                     <img src="<?php echo $url_foto_post; ?>" alt="Post" class="notif-img">

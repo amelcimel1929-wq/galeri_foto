@@ -37,6 +37,11 @@ if (isset($koneksi) || isset($conn)) {
 
 include '../partials/header.php';
 include '../partials/navbar.php';
+$avatar_src = null;
+if (!empty($foto_profil)) {
+    if (file_exists(__DIR__ . '/../../backend/uploads/' . $foto_profil)) $avatar_src = '../../backend/uploads/' . rawurlencode($foto_profil);
+    elseif (file_exists(__DIR__ . '/../../uploads/' . $foto_profil)) $avatar_src = '../../uploads/' . rawurlencode($foto_profil);
+}
 ?>
 
 <style>
@@ -199,6 +204,7 @@ include '../partials/navbar.php';
 </style>
 
 <div class="edit-profile-container">
+    <a href="profile_pribadi.php" class="edit-profile-back" aria-label="Kembali ke profil">← Kembali ke profil</a>
     <h1 class="edit-profile-title">Edit profile</h1>
     <p class="edit-profile-subtitle">Keep your personal details private. Information you add here is visible to anyone who can view your profile.</p>
 
@@ -210,8 +216,8 @@ include '../partials/navbar.php';
             <div class="field-label">Photo</div>
             <div class="photo-wrapper">
                 <div class="avatar-circle">
-                    <?php if (!empty($foto_profil)): ?>
-                        <img src="../../uploads/<?= htmlspecialchars($foto_profil); ?>?v=<?= time(); ?>" alt="Profile Photo">
+                    <?php if ($avatar_src): ?>
+                        <img src="<?= htmlspecialchars($avatar_src); ?>?v=<?= time(); ?>" alt="Profile Photo">
                     <?php else: ?>
                         <?= strtoupper(substr($username ?: 'A', 0, 1)); ?>
                     <?php endif; ?>
@@ -250,6 +256,8 @@ include '../partials/navbar.php';
 
     </form>
 </div>
+
+<style>.edit-profile-back{display:inline-flex;margin-bottom:18px;color:#111;text-decoration:none;font-weight:600}.edit-profile-back:hover{text-decoration:underline}</style>
 
 </body>
 </html>

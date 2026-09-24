@@ -47,6 +47,13 @@ if (!empty($foto['foto_profil'])) {
         $uploader_avatar = '../../uploads/' . rawurlencode($foto['foto_profil']);
     }
 }
+$recommended_photos = [];
+$rec_stmt = $koneksi->prepare("SELECT id_foto, judul_foto, lokasi_file FROM foto WHERE id_foto != ? AND visibilitas = 'public' ORDER BY tanggal_ungahan DESC LIMIT 30");
+$rec_stmt->bind_param('i', $id_foto);
+$rec_stmt->execute();
+$rec_result = $rec_stmt->get_result();
+while ($rec_row = $rec_result->fetch_assoc()) $recommended_photos[] = $rec_row;
+$rec_stmt->close();
 ?>
 
 <style>
@@ -254,10 +261,11 @@ if (!empty($foto['foto_profil'])) {
         flex-shrink: 0;
         overflow: hidden;
     }
+    .pin-top-section { width:100%; }
     .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
 
     .pin-title-text { font-size: 15px; font-weight: 700; margin: 0 0 6px; color: #111; line-height: 1.2; }
-    .pin-desc-text { font-size: 12px; color: #333; margin-bottom: 10px; line-height: 1.3; }
+    .pin-desc-text { font-size: 12px; color: #333; margin-bottom: 10px; line-height: 1.3; white-space: pre-line; }
 
     /* KOMENTAR */
     .comments-wrapper {
@@ -485,6 +493,9 @@ if (!empty($foto['foto_profil'])) {
                                 </button>
 
                                 <div class="more-options-menu" id="moreOptionsMenu">
+                                    <button type="button" id="btnEditDescription">
+                                        <span>Ubah judul &amp; deskripsi</span>
+                                    </button>
                                     <button type="button" id="btnToggleArchive">
                                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -493,7 +504,7 @@ if (!empty($foto['foto_profil'])) {
                                         <span id="labelArchive"><?php echo ($visibilitas === 'private') ? 'Jadikan Public' : 'Arsipkan (Private)'; ?></span>
                                     </button>
 
-                                  <button type="button" id="btnDeleteMedia" class="danger-text" onclick="if(confirm('Apakah Anda yakin ingin menghapus media ini?')) { window.location.href='../../backend/controllers/procces_delete_detail.php?id_foto=<?= $foto['id_foto']; ?>'; }">
+                                  <button type="button" id="btnDeleteMedia" class="danger-text">
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3 6 5 6 21 6"></polyline>
         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -514,9 +525,10 @@ if (!empty($foto['foto_profil'])) {
                         </div>
                     </a>
 
-                    <h1 class="pin-title-text"><?php echo htmlspecialchars($foto['judul_foto']); ?></h1>
+                    <h1 class="pin-title-text" id="photoTitle"><?php echo htmlspecialchars($foto['judul_foto']); ?></h1>
                     <?php if (!empty($foto['deskripsi_foto'])): ?>
-                        <div class="pin-desc-text"><?php echo nl2br(htmlspecialchars($foto['deskripsi_foto'])); ?></div>
+                        <div class="pin-desc-text" id="photoDescription"><?php echo nl2br(htmlspecialchars($foto['deskripsi_foto'])); ?></div>
+                    <?php else: ?><div class="pin-desc-text" id="photoDescription"></div>
                     <?php endif; ?>
 
                     <div style="font-weight:700; font-size:12px; margin-top:10px;">Komentar</div>
@@ -532,28 +544,13 @@ if (!empty($foto['foto_profil'])) {
 
         <!-- Rekomendasi Samping -->
         <div class="pin-sidebar-recommend">
-            <?php
-            $rec_side = "SELECT * FROM foto WHERE id_foto != ? AND (visibilitas = 'public' OR id_user = ?) ORDER BY id_foto DESC";
-            $stmt_side = $koneksi->prepare($rec_side);
-            $stmt_side->bind_param("ii", $id_foto, $id_user_login);
-            $stmt_side->execute();
-            $res_side = $stmt_side->get_result();
-
-            if ($res_side->num_rows > 0):
-                while ($rec = $res_side->fetch_assoc()):
-                    $rec_path = "../../backend/uploads/" . htmlspecialchars($rec['lokasi_file']);
-            ?>
+            <?php if ($recommended_photos): foreach ($recommended_photos as $rec): $rec_path = "../../backend/uploads/" . htmlspecialchars($rec['lokasi_file']); ?>
                     <div class="recommend-item">
-                        <a href="detail.php?id=<?php echo $rec['id_foto']; ?>">
+                        <a href="detail.php?id=<?= (int)$rec['id_foto']; ?>">
                             <img src="<?php echo $rec_path; ?>" alt="<?php echo htmlspecialchars($rec['judul_foto']); ?>">
                         </a>
                     </div>
-            <?php 
-                endwhile;
-            else:
-            ?>
-                <p style="color:#767676; font-size:12px; grid-column: span 2;">Tidak ada foto lain dari user ini.</p>
-            <?php endif; ?>
+            <?php endforeach; else: ?><p style="color:#767676;font-size:12px;">Belum ada rekomendasi.</p><?php endif; ?>
         </div>
     </div>
 </div>
@@ -581,6 +578,20 @@ if (!empty($foto['foto_profil'])) {
         </div>
     </div>
 </div>
+
+<dialog id="editPhotoDialog" style="width:min(92vw,520px);border:0;border-radius:18px;padding:24px;box-shadow:0 12px 40px #0003">
+    <form id="editPhotoForm">
+        <h2 style="margin:0 0 18px">Edit foto</h2>
+        <label for="editPhotoTitle" style="display:block;font-weight:600;margin-bottom:6px">Judul</label>
+        <input id="editPhotoTitle" required maxlength="255" style="box-sizing:border-box;width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;margin-bottom:14px">
+        <label for="editPhotoDescription" style="display:block;font-weight:600;margin-bottom:6px">Deskripsi</label>
+        <textarea id="editPhotoDescription" rows="5" style="box-sizing:border-box;width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;resize:vertical"></textarea>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+            <button type="button" id="cancelEditPhoto" class="btn-save-red" style="background:#eee;color:#111">Batal</button>
+            <button type="submit" class="btn-save-red">Simpan</button>
+        </div>
+    </form>
+</dialog>
 
 <script>
 const ID_FOTO = <?php echo $id_foto; ?>;
@@ -625,6 +636,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnToggleArchive = document.getElementById('btnToggleArchive');
     const labelArchive = document.getElementById('labelArchive');
     const btnDeleteMedia = document.getElementById('btnDeleteMedia');
+    const btnEditDescription = document.getElementById('btnEditDescription');
+    const editPhotoDialog = document.getElementById('editPhotoDialog');
+    const editPhotoForm = document.getElementById('editPhotoForm');
+    if (btnEditDescription) btnEditDescription.addEventListener('click', function () {
+        document.getElementById('editPhotoTitle').value = document.getElementById('photoTitle').textContent.trim();
+        document.getElementById('editPhotoDescription').value = document.getElementById('photoDescription').innerText.trim();
+        editPhotoDialog.showModal();
+    });
+    document.getElementById('cancelEditPhoto').addEventListener('click', () => editPhotoDialog.close());
+    editPhotoForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const nextTitle = document.getElementById('editPhotoTitle').value.trim();
+        const nextDescription = document.getElementById('editPhotoDescription').value.trim();
+        const formData = new FormData();
+        formData.append('action', 'update_details');
+        formData.append('id_foto', ID_FOTO);
+        formData.append('judul_foto', nextTitle.trim());
+        formData.append('deskripsi_foto', nextDescription.trim());
+        const response = await fetch('../../backend/controllers/foto_process.php', { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.status === 'ok') {
+            document.getElementById('photoTitle').textContent = data.judul_foto;
+            document.getElementById('photoDescription').textContent = data.deskripsi_foto;
+            editPhotoDialog.close();
+            moreOptionsMenu.classList.remove('active');
+        } else alert(data.message || 'Gagal memperbarui foto.');
+    });
 
     let isAlreadyFavorited = false;
 

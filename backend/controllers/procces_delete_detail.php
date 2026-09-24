@@ -38,8 +38,7 @@ foreach ($tablesWithIdFoto as $table) {
     $qDelRelasi = "DELETE FROM {$table} WHERE id_foto = ?";
     $stmtRel = $koneksi->prepare($qDelRelasi);
     $stmtRel->bind_param("i", $id_foto);
-    $stmtRel->execute();
-    $stmtRel->close();
+    if ($stmtRel) { $stmtRel->execute(); $stmtRel->close(); }
 }
 
 // 3. Hapus file gambar fisik di folder uploads

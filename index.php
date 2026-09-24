@@ -18,10 +18,10 @@ $search_raw = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 <style>
     .pin-container {
-        column-count: 5;
-        column-gap: 16px;
-        padding: 20px 32px;
-        margin-top: 70px;
+        column-count: 6;
+        column-gap: 12px;
+        padding: 8px 8px 20px 0;
+        margin-top: 0;
     }
     .pin-card {
         break-inside: avoid;
@@ -89,8 +89,10 @@ $search_raw = isset($_GET['search']) ? trim($_GET['search']) : '';
         font-size: 14px;
         color: #111;
     }
-    @media (max-width: 1200px) { .pin-container { column-count: 4; } }
-    @media (max-width: 800px)  { .pin-container { column-count: 2; } }
+    @media (max-width: 1400px) { .pin-container { column-count: 5; } }
+    @media (max-width: 1100px) { .pin-container { column-count: 4; } }
+    @media (max-width: 800px)  { .pin-container { column-count: 3; padding-left: 0; } }
+    @media (max-width: 560px)  { .pin-container { column-count: 2; padding: 8px 4px 16px 0; } }
 </style>
 
 <main class="main-content">

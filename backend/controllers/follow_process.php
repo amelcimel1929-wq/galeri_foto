@@ -12,6 +12,7 @@ if (!isset($_SESSION['id_user'])) {
 
 $id_follower  = (int)$_SESSION['id_user'];
 $id_following = isset($_POST['id_following']) ? (int)$_POST['id_following'] : 0;
+$follow_back = !empty($_POST['follow_back']);
 
 // Validasi agar tidak bisa follow diri sendiri atau ID tidak valid
 if ($id_following > 0 && $id_follower !== $id_following) {
@@ -23,7 +24,15 @@ if ($id_following > 0 && $id_follower !== $id_following) {
     $stmt->execute();
     $res = $stmt->get_result();
 
-    if ($res->num_rows > 0) {
+    if ($follow_back) {
+        if ($res->num_rows === 0) {
+            $ins_sql = "INSERT INTO follow (id_follower, id_following) VALUES (?, ?)";
+            $ins_stmt = $koneksi->prepare($ins_sql);
+            $ins_stmt->bind_param("ii", $id_follower, $id_following);
+            $ins_stmt->execute();
+            $ins_stmt->close();
+        }
+    } elseif ($res->num_rows > 0) {
         // --- PROSES UNFOLLOW ---
         $del_sql = "DELETE FROM follow WHERE id_follower = ? AND id_following = ?";
         $del_stmt = $koneksi->prepare($del_sql);
