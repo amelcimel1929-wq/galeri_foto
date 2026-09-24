@@ -21,7 +21,7 @@ if (isset($_SERVER['HTTP_REFERER']) && !empty($_SERVER['HTTP_REFERER'])) {
 }
 
 // --- AMBIL DETAIL FOTO & UPLOADER ---
-$query = "SELECT foto.*, user.username, user.nama_lengkap 
+$query = "SELECT foto.*, user.username, user.nama_lengkap, user.foto_profil
           FROM foto 
           JOIN user ON foto.id_user = user.id_user 
           WHERE foto.id_foto = ?";
@@ -39,6 +39,14 @@ $file_path = "../../backend/uploads/" . htmlspecialchars($foto['lokasi_file']);
 $uploader_id = $foto['id_user'];
 $is_owner = ($uploader_id == $id_user_login);
 $visibilitas = $foto['visibilitas'] ?? 'public';
+$uploader_avatar = null;
+if (!empty($foto['foto_profil'])) {
+    if (file_exists(__DIR__ . '/../../backend/uploads/' . $foto['foto_profil'])) {
+        $uploader_avatar = '../../backend/uploads/' . rawurlencode($foto['foto_profil']);
+    } elseif (file_exists(__DIR__ . '/../../uploads/' . $foto['foto_profil'])) {
+        $uploader_avatar = '../../uploads/' . rawurlencode($foto['foto_profil']);
+    }
+}
 ?>
 
 <style>
@@ -46,26 +54,27 @@ $visibilitas = $foto['visibilitas'] ?? 'public';
         background-color: #ffffff;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
         margin: 0;
-        padding-top: 75px;
+        padding-top: 80px;
     }
 
     .main-wrapper {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 16px;
+        width: calc(100% - 72px);
+        margin: 0 0 0 72px;
+        padding: 20px 24px;
     }
 
     .pin-top-section {
         display: flex;
-        gap: 16px;
+        gap: 20px;
         align-items: flex-start;
     }
 
     /* KARTU UTAMA */
     .pin-main-card {
         display: flex;
-        width: 700px;
-        height: 440px;
+        width: min(58%, 760px);
+        min-width: 560px;
+        min-height: min(680px, calc(100vh - 120px));
         background: #ffffff;
         border-radius: 24px;
         box-shadow: 0 1px 12px rgba(0, 0, 0, 0.08);
@@ -242,7 +251,10 @@ $visibilitas = $foto['visibilitas'] ?? 'public';
         justify-content: center;
         font-weight: bold;
         font-size: 12px;
+        flex-shrink: 0;
+        overflow: hidden;
     }
+    .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
 
     .pin-title-text { font-size: 15px; font-weight: 700; margin: 0 0 6px; color: #111; line-height: 1.2; }
     .pin-desc-text { font-size: 12px; color: #333; margin-bottom: 10px; line-height: 1.3; }
@@ -354,16 +366,16 @@ $visibilitas = $foto['visibilitas'] ?? 'public';
     /* REKOMENDASI SAMPING */
     .pin-sidebar-recommend {
         flex: 1;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 12px;
-        max-height: 440px;
-        overflow-y: auto;
+        min-width: 0;
+        columns: 3 150px;
+        column-gap: 14px;
     }
     .recommend-item {
         border-radius: 16px;
         overflow: hidden;
         background: #f0f0f0;
+        break-inside: avoid;
+        margin-bottom: 14px;
     }
     .recommend-item img {
         width: 100%;
@@ -371,6 +383,18 @@ $visibilitas = $foto['visibilitas'] ?? 'public';
         display: block;
         border-radius: 16px;
         object-fit: cover;
+    }
+    @media (max-width: 1100px) {
+        .pin-main-card { width: 56%; min-width: 480px; }
+        .pin-sidebar-recommend { columns: 2 130px; }
+    }
+    @media (max-width: 760px) {
+        .main-wrapper { width: 100%; margin-left: 0; padding: 12px; }
+        .pin-top-section { flex-direction: column; }
+        .pin-main-card { width: 100%; min-width: 0; min-height: 600px; height: auto; flex-direction: column; }
+        .pin-photo-container { min-height: 320px; }
+        .pin-details-container { min-height: 300px; }
+        .pin-sidebar-recommend { width: 100%; columns: 2 140px; }
     }
 
     /* MODAL LIGHTBOX */
@@ -483,7 +507,7 @@ $visibilitas = $foto['visibilitas'] ?? 'public';
 
                     <!-- UPLOADER BOX -->
                     <a href="profile_dimata_userlain.php?user_id=<?php echo $foto['id_user']; ?>" class="uploader-box">
-                        <div class="avatar-circle"><?php echo strtoupper(substr($foto['username'], 0, 1)); ?></div>
+                        <div class="avatar-circle"><?php if ($uploader_avatar): ?><img src="<?php echo htmlspecialchars($uploader_avatar); ?>" alt=""><?php else: ?><?php echo strtoupper(substr($foto['username'], 0, 1)); ?><?php endif; ?></div>
                         <div>
                             <div style="font-weight:700; font-size:13px;"><?php echo htmlspecialchars($foto['nama_lengkap']); ?></div>
                             <div style="font-size:11px; color:#767676;">@<?php echo htmlspecialchars($foto['username']); ?></div>
@@ -509,9 +533,9 @@ $visibilitas = $foto['visibilitas'] ?? 'public';
         <!-- Rekomendasi Samping -->
         <div class="pin-sidebar-recommend">
             <?php
-            $rec_side = "SELECT * FROM foto WHERE id_user = ? AND id_foto != ? ORDER BY id_foto DESC LIMIT 2";
+            $rec_side = "SELECT * FROM foto WHERE id_foto != ? AND (visibilitas = 'public' OR id_user = ?) ORDER BY id_foto DESC";
             $stmt_side = $koneksi->prepare($rec_side);
-            $stmt_side->bind_param("ii", $uploader_id, $id_foto);
+            $stmt_side->bind_param("ii", $id_foto, $id_user_login);
             $stmt_side->execute();
             $res_side = $stmt_side->get_result();
 

@@ -78,9 +78,9 @@ body {
 .pinterest-profile-main {
     width: 100%;
     min-height: calc(100vh - 80px);
-    padding-top: 90px;   /* Jarak aman di bawah Search Bar Navbar */
-    padding-left: 140px; /* Disamakan dengan posisi avatar pada gambar acuan */
-    padding-right: 140px;
+    padding-top: 100px;   /* Ruang untuk navbar atas */
+    padding-left: 96px; /* Sejajar setelah navbar samping */
+    padding-right: 28px;
     padding-bottom: 60px;
 }
 
@@ -228,7 +228,7 @@ body {
 ===================================== */
 .tabs-container {
     display: flex;
-    justify-content: center; /* Tetap di tengah sesuai gambar acuan */
+    justify-content: flex-start;
     align-items: center;
     gap: 16px;
     width: 100%;
@@ -363,17 +363,26 @@ body {
 /* RESPONSIVE */
 @media (max-width: 1200px) {
     .pinterest-profile-main {
-        padding-left: 60px;
-        padding-right: 60px;
+        padding-left: 92px;
+        padding-right: 24px;
     }
 }
 
 @media (max-width: 768px) {
     .pinterest-profile-main {
-        padding-left: 16px;
+        padding-left: 88px;
         padding-right: 16px;
         padding-top: 80px;
     }
+}
+
+@media (max-width: 520px) {
+    .pinterest-profile-main { padding-left: 78px; padding-right: 12px; }
+    .profile-header-container { gap: 14px; }
+    .avatar-wrapper { width: 76px; height: 76px; }
+    .avatar-circle { font-size: 34px; }
+    .profile-name { font-size: 21px; }
+    .tabs-container { justify-content: flex-start; gap: 4px; }
 }
 </style>
 
