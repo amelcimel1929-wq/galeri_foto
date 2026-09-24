@@ -44,6 +44,19 @@ if (!empty($foto_profil_nav)) {
         $avatar_src_nav = '/galeri_foto/uploads/' . htmlspecialchars($foto_profil_nav);
     }
 }
+
+// ==== NOTIFIKASI UBAH PASSWORD (ambil dari session, lalu hapus) ====
+$toast_message_nav = null;
+$toast_type_nav = null;
+if (isset($_SESSION['success_msg'])) {
+    $toast_message_nav = $_SESSION['success_msg'];
+    $toast_type_nav = 'success';
+    unset($_SESSION['success_msg']);
+} elseif (isset($_SESSION['error_msg'])) {
+    $toast_message_nav = $_SESSION['error_msg'];
+    $toast_type_nav = 'error';
+    unset($_SESSION['error_msg']);
+}
 ?>
 
 <input type="hidden" id="userId" value="<?php echo $_SESSION['id_user'] ?? ''; ?>">
@@ -287,6 +300,68 @@ body {
 
 .btn-submit-password:hover {
     background-color: #ad081b;
+}
+
+/* 3. TOAST NOTIFIKASI (Password telah diperbarui / error) */
+.toast-password-notif {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background-color: #111111;
+    color: #ffffff;
+    padding: 14px 16px 14px 18px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10001;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    max-width: 90vw;
+}
+
+.toast-password-notif.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.toast-password-notif.toast-success i.toast-status-icon {
+    color: #2ecc71;
+}
+
+.toast-password-notif.toast-error {
+    background-color: #e60023;
+}
+
+.toast-password-notif.toast-error i.toast-status-icon {
+    color: #ffffff;
+}
+
+.toast-close-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    opacity: 0.8;
+    font-size: 14px;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.toast-close-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* TOP NAVBAR */
@@ -616,7 +691,16 @@ body {
     </div>
 </div>
 
-
+<!-- TOAST NOTIFIKASI HASIL UBAH PASSWORD -->
+<?php if ($toast_message_nav): ?>
+<div class="toast-password-notif toast-<?php echo $toast_type_nav; ?>" id="passwordToastNotif">
+    <i class="fa-solid <?php echo $toast_type_nav === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'; ?> toast-status-icon"></i>
+    <span><?php echo htmlspecialchars($toast_message_nav); ?></span>
+    <button type="button" class="toast-close-btn" id="btnCloseToastNotif" title="Tutup">
+        <i class="fa-solid fa-xmark"></i>
+    </button>
+</div>
+<?php endif; ?>
 
 <!-- Top Navbar -->
 <header class="top-navbar" id="topNavbar">
@@ -763,6 +847,32 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // ==== TOAST NOTIFIKASI HASIL UBAH PASSWORD ====
+    const passwordToastNotif = document.getElementById('passwordToastNotif');
+    const btnCloseToastNotif = document.getElementById('btnCloseToastNotif');
+    let toastAutoHideTimer = null;
+
+    function hidePasswordToast() {
+        if (!passwordToastNotif) return;
+        passwordToastNotif.classList.remove('show');
+        if (toastAutoHideTimer) clearTimeout(toastAutoHideTimer);
+    }
+
+    if (passwordToastNotif) {
+        // Munculkan toast sesaat setelah halaman dimuat (biar ada efek transisi)
+        requestAnimationFrame(function() {
+            passwordToastNotif.classList.add('show');
+        });
+
+        // Auto hide setelah 4 detik
+        toastAutoHideTimer = setTimeout(hidePasswordToast, 4000);
+
+        // Klik ikon X -> tutup toast manual
+        if (btnCloseToastNotif) {
+            btnCloseToastNotif.addEventListener('click', hidePasswordToast);
+        }
+    }
 
     // Toggle Shift Function
     function toggleContentShift(shift) {

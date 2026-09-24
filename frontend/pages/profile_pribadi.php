@@ -40,6 +40,26 @@ if (isset($koneksi) || isset($conn)) {
     $qUser->close();
 }
 
+// ==== HITUNG JUMLAH FOLLOWERS & FOLLOWING ====
+$jumlah_followers = 0;
+$jumlah_following = 0;
+
+if (isset($koneksi) || isset($conn)) {
+    $db = $koneksi ?? $conn;
+
+    $q_followers = $db->prepare("SELECT COUNT(*) AS total FROM follow WHERE id_following = ?");
+    $q_followers->bind_param("i", $id_user_login);
+    $q_followers->execute();
+    $jumlah_followers = (int)($q_followers->get_result()->fetch_assoc()['total'] ?? 0);
+    $q_followers->close();
+
+    $q_following = $db->prepare("SELECT COUNT(*) AS total FROM follow WHERE id_follower = ?");
+    $q_following->bind_param("i", $id_user_login);
+    $q_following->execute();
+    $jumlah_following = (int)($q_following->get_result()->fetch_assoc()['total'] ?? 0);
+    $q_following->close();
+}
+
 // Ambil tab aktif dari URL, default ke 'liked'
 $tab = $_GET['tab'] ?? 'liked';
 
@@ -417,8 +437,8 @@ body {
                 <?= htmlspecialchars($handle); ?>
             </div>
 
-            <div class="profile-stats">
-                0 followers · 0 following
+            <div class="profile-stats" id="profileStatsText">
+                <span id="statFollowersCount"><?= $jumlah_followers; ?></span> followers · <span id="statFollowingCount"><?= $jumlah_following; ?></span> following
             </div>
 
             <div class="profile-bio">
@@ -508,6 +528,25 @@ document.querySelectorAll('.tab-item').forEach(tab => {
             .catch(err => console.error('Gagal memuat tab:', err));
     });
 });
+
+// ==== POLLING FOLLOWER & FOLLOWING COUNT (auto update tiap 10 detik) ====
+const statFollowersEl = document.getElementById('statFollowersCount');
+const statFollowingEl = document.getElementById('statFollowingCount');
+
+function perbaruiJumlahFollower() {
+    fetch('../../backend/controllers/get_follower_count.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                if (statFollowersEl) statFollowersEl.textContent = data.followers;
+                if (statFollowingEl) statFollowingEl.textContent = data.following;
+            }
+        })
+        .catch(err => console.error('Gagal ambil jumlah follower:', err));
+}
+
+// Jalankan tiap 10 detik
+setInterval(perbaruiJumlahFollower, 10000);
 </script>
 
 </body>

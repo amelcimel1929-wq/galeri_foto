@@ -23,6 +23,14 @@ if ($dataUser =$resUser->fetch_assoc()) {
 }
 $qUser->close();
 
+// ==== HITUNG JUMLAH FOLLOWERS (orang yang follow kita) ====
+$jumlah_followers = 0;
+$q_followers = $koneksi->prepare("SELECT COUNT(*) AS total FROM follow WHERE id_following = ?");
+$q_followers->bind_param("i", $id_user_login);
+$q_followers->execute();
+$jumlah_followers = (int)($q_followers->get_result()->fetch_assoc()['total'] ?? 0);
+$q_followers->close();
+
 // Ambil tab & filter privasi dari URL
 $tab =$_GET['tab'] ?? 'boards';
 $privacy =$_GET['privacy'] ?? 'all';
@@ -61,7 +69,7 @@ include '../partials/navbar.php';
                 </div>
             </div>
 
-            <!-- Sisi Kanan: Avatar, Nama, Following, Share Profile -->
+            <!-- Sisi Kanan: Avatar, Nama, Followers, Share Profile -->
             <div class="profile-right-col">
                 
                 <div class="profile-avatar-wrapper">
@@ -86,7 +94,7 @@ include '../partials/navbar.php';
                             <?= htmlspecialchars($_SESSION['username'] ?? 'User'); ?>
                         </a>
                     </h2>
-                    <p class="following-count">0 following</p>
+                    <p class="following-count"><span id="statFollowersCount"><?= $jumlah_followers; ?></span> followers</p>
                 </div>
 
                 <button type="button" class="btn-share-profile">Share profile</button>
@@ -394,6 +402,23 @@ document.querySelectorAll('.subtab-item').forEach(subtab => {
         loadContent('boards', selectedPrivacy);
     });
 });
+
+// ==== POLLING JUMLAH FOLLOWERS (auto update tiap 10 detik) ====
+const statFollowersElProfile = document.getElementById('statFollowersCount');
+
+function perbaruiJumlahFollowersProfile() {
+    fetch('../../backend/controllers/get_follower_count.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success' && statFollowersElProfile) {
+                statFollowersElProfile.textContent = data.followers;
+            }
+        })
+        .catch(err => console.error('Gagal ambil jumlah followers:', err));
+}
+
+// Jalankan tiap 10 detik
+setInterval(perbaruiJumlahFollowersProfile, 10000);
 </script>
 
 </body>

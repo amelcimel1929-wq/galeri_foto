@@ -5,6 +5,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/connection.php';
 
+// Tentukan halaman tujuan redirect (halaman asal tempat modal dibuka)
+$redirect_target = $_SERVER['HTTP_REFERER'] ?? '/galeri_foto/index.php';
+
 // Pastikan request menggunakan method POST dan user sudah login
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['id_user'])) {
     header("Location: /galeri_foto/frontend/pages/login.php");
@@ -19,21 +22,21 @@ $confirm_password = $_POST['confirm_password'] ?? '';
 // Validasi Form Kosong
 if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
     $_SESSION['error_msg'] = "Semua kolom wajib diisi.";
-    header("Location: /galeri_foto/frontend/pages/ganti_password.php");
+    header("Location: " . $redirect_target);
     exit();
 }
 
 // Validasi Kesesuaian Password Baru
 if ($new_password !== $confirm_password) {
     $_SESSION['error_msg'] = "Konfirmasi kata sandi baru tidak cocok.";
-    header("Location: /galeri_foto/frontend/pages/ganti_password.php");
+    header("Location: " . $redirect_target);
     exit();
 }
 
 // Minimal Panjang Password
 if (strlen($new_password) < 6) {
     $_SESSION['error_msg'] = "Kata sandi baru minimal 6 karakter.";
-    header("Location: /galeri_foto/frontend/pages/ganti_password.php");
+    header("Location: " . $redirect_target);
     exit();
 }
 
@@ -56,7 +59,7 @@ if ($row = $res->fetch_assoc()) {
 
     if (!$is_valid) {
         $_SESSION['error_msg'] = "Kata sandi saat ini salah.";
-        header("Location: /galeri_foto/frontend/pages/ganti_password.php");
+        header("Location: " . $redirect_target);
         exit();
     }
 
@@ -66,7 +69,7 @@ if ($row = $res->fetch_assoc()) {
     $updateStmt->bind_param("si", $hashed_new_password, $id_user);
 
     if ($updateStmt->execute()) {
-        $_SESSION['success_msg'] = "Kata sandi berhasil diperbarui.";
+        $_SESSION['success_msg'] = "Password telah diperbarui.";
     } else {
         $_SESSION['error_msg'] = "Gagal memperbarui kata sandi. Silakan coba lagi.";
     }
@@ -76,5 +79,5 @@ if ($row = $res->fetch_assoc()) {
 }
 
 $stmt->close();
-header("Location: /galeri_foto/frontend/pages/ganti_password.php");
+header("Location: " . $redirect_target);
 exit();
